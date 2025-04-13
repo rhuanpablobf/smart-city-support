@@ -214,46 +214,60 @@ const UsersManagement: React.FC = () => {
   const handleEditUser = () => {
     if (!currentUser) return;
     
-    // Update user
-    setUsers((prevUsers) =>
-      prevUsers.map((user) => {
-        if (user.id === currentUser.id) {
-          return currentUser;
-        }
-        return user;
-      })
-    );
-    
-    // Close dialog
-    setIsEditDialogOpen(false);
-    
-    // Show success message
-    toast.success('Usuário atualizado com sucesso');
+    // Simulate API call delay (in a real app, this would be an actual API call)
+    try {
+      // Update user in database (simulated)
+      console.log('Saving user to database:', currentUser);
+      
+      // Update user in local state
+      setUsers((prevUsers) =>
+        prevUsers.map((user) => {
+          if (user.id === currentUser.id) {
+            return { ...currentUser };  // create a new object to ensure state updates
+          }
+          return user;
+        })
+      );
+      
+      // Show success message (toast is already handled in EditUserDialog)
+    } catch (error) {
+      toast.error('Erro ao atualizar usuário');
+      console.error('Error updating user:', error);
+    }
   };
 
   const handleDeleteUser = () => {
     if (!currentUser) return;
     
-    // Remove user
-    setUsers((prevUsers) =>
-      prevUsers.filter((user) => user.id !== currentUser.id)
-    );
-    
-    // Close dialog
-    setIsDeleteDialogOpen(false);
-    
-    // Show success message
-    toast.success('Usuário removido com sucesso');
+    try {
+      // Remove user from database (simulated)
+      console.log('Deleting user from database:', currentUser.id);
+      
+      // Remove user from local state
+      setUsers((prevUsers) =>
+        prevUsers.filter((user) => user.id !== currentUser.id)
+      );
+      
+      // Close dialog
+      setIsDeleteDialogOpen(false);
+      
+      // Show success message
+      toast.success('Usuário removido com sucesso');
+    } catch (error) {
+      toast.error('Erro ao remover usuário');
+      console.error('Error deleting user:', error);
+    }
   };
 
   const openEditDialog = (user: User) => {
-    setCurrentUser(user);
+    // Create a deep copy of the user to prevent unintended state mutations
+    setCurrentUser(JSON.parse(JSON.stringify(user)));
     setSelectedSecretaryId(user.secretaryId || null);
     setIsEditDialogOpen(true);
   };
 
   const openDeleteDialog = (user: User) => {
-    setCurrentUser(user);
+    setCurrentUser(JSON.parse(JSON.stringify(user)));
     setIsDeleteDialogOpen(true);
   };
 
