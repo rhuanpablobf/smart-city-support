@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { Conversation } from '@/types/chat';
-import { ChatWindow } from '@/components/chat/ChatWindow';
-import { ConversationList } from '@/components/chat/ConversationList';
+import ChatWindow from '@/components/chat/ChatWindow';
+import ConversationList from '@/components/chat/ConversationList';
 import { useQuery } from '@tanstack/react-query';
 import { fetchConversations } from '@/services';
 
