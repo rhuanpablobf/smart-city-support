@@ -22,7 +22,7 @@ interface AddUserDialogProps {
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
   newUser: Partial<User>;
-  setNewUser: (user: Partial<User>) => void;
+  setNewUser: (field: keyof User, value: any) => void;
   handleAddUser: () => void;
   getAvailableRoles: () => UserRole[];
   getRoleName: (role: UserRole) => string;
@@ -70,7 +70,7 @@ const AddUserDialog: React.FC<AddUserDialogProps> = ({
               placeholder="Nome completo"
               value={newUser.name}
               onChange={(e) =>
-                setNewUser({ ...newUser, name: e.target.value })
+                setNewUser('name', e.target.value)
               }
             />
           </div>
@@ -82,7 +82,7 @@ const AddUserDialog: React.FC<AddUserDialogProps> = ({
               placeholder="email@exemplo.com"
               value={newUser.email}
               onChange={(e) =>
-                setNewUser({ ...newUser, email: e.target.value })
+                setNewUser('email', e.target.value)
               }
             />
           </div>
@@ -91,7 +91,7 @@ const AddUserDialog: React.FC<AddUserDialogProps> = ({
             <Select
               value={newUser.role}
               onValueChange={(value: UserRole) =>
-                setNewUser({ ...newUser, role: value })
+                setNewUser('role', value)
               }
             >
               <SelectTrigger id="role">
@@ -159,10 +159,7 @@ const AddUserDialog: React.FC<AddUserDialogProps> = ({
                 max={10}
                 value={newUser.maxConcurrentChats}
                 onChange={(e) =>
-                  setNewUser({
-                    ...newUser,
-                    maxConcurrentChats: parseInt(e.target.value) || 1,
-                  })
+                  setNewUser('maxConcurrentChats', parseInt(e.target.value) || 1)
                 }
               />
             </div>

@@ -106,6 +106,7 @@ export function useUsers(currentUserRole: UserRole | undefined, currentUserSecre
     setIsDeleteDialogOpen(true);
   };
 
+  // Fixed type definition to match the expected usage in UsersManagement.tsx
   const updateNewUserField = (field: keyof User, value: any) => {
     setNewUser(prev => {
       if (field === 'secretaryId') {
@@ -118,15 +119,18 @@ export function useUsers(currentUserRole: UserRole | undefined, currentUserSecre
     });
   };
 
+  // Fixed these two functions to properly handle type safety
   const updateCurrentUserSecretary = (value: string) => {
     if (!currentUser) return;
-    setCurrentUser(updateUserDepartmentInfo({ ...currentUser }, value, null));
+    const updatedUser = updateUserDepartmentInfo({ ...currentUser }, value, null);
+    setCurrentUser(updatedUser as User); // Type assertion since we know currentUser is a full User
     setSelectedSecretaryId(value);
   };
 
   const updateCurrentUserDepartment = (value: string) => {
     if (!currentUser) return;
-    setCurrentUser(updateUserDepartmentInfo({ ...currentUser }, currentUser.secretaryId, value));
+    const updatedUser = updateUserDepartmentInfo({ ...currentUser }, currentUser.secretaryId, value);
+    setCurrentUser(updatedUser as User); // Type assertion since we know currentUser is a full User
   };
 
   // Get available roles for creating new users
