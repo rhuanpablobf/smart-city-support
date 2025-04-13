@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import {
   Card,
@@ -8,68 +9,24 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import {
-  Search,
-  Plus,
-  MoreVertical,
-  Edit,
-  Trash,
-  Building,
-  Users,
-  UserCog,
-  BriefcaseBusiness,
-} from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
 import { mockAgents } from '@/services/mockData';
 import { User, UserRole } from '@/types/auth';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
-
-// Mock departments and secretaries data
-const mockSecretaries = [
-  { id: 'sec1', name: 'Secretaria de Saúde' },
-  { id: 'sec2', name: 'Secretaria de Educação' },
-  { id: 'sec3', name: 'Secretaria de Finanças' },
-];
-
-const mockDepartments = [
-  { id: 'dep1', name: 'Departamento de Consultas', secretaryId: 'sec1' },
-  { id: 'dep2', name: 'Departamento de Vacinas', secretaryId: 'sec1' },
-  { id: 'dep3', name: 'Departamento de Matrículas', secretaryId: 'sec2' },
-  { id: 'dep4', name: 'Departamento de IPTU', secretaryId: 'sec3' },
-];
+import UsersList from '@/components/users/UsersList';
+import UserFilters from '@/components/users/UserFilters';
+import AddUserDialog from '@/components/users/AddUserDialog';
+import EditUserDialog from '@/components/users/EditUserDialog';
+import DeleteUserDialog from '@/components/users/DeleteUserDialog';
+import { 
+  mockSecretaries, 
+  mockDepartments, 
+  getRoleName, 
+  getRoleBadgeStyle,
+  getAvailableRoles as getUserAvailableRoles,
+  canAddUsers as checkCanAddUsers
+} from '@/utils/userManagement';
 
 const UsersManagement: React.FC = () => {
   const { authState } = useAuth();
@@ -300,48 +257,16 @@ const UsersManagement: React.FC = () => {
     setIsDeleteDialogOpen(true);
   };
 
-  // Get role name in Portuguese
-  const getRoleName = (role: UserRole) => {
-    switch (role) {
-      case 'admin':
-        return 'Administrador Master';
-      case 'secretary_admin':
-        return 'Administrador de Secretaria';
-      case 'manager':
-        return 'Gerente';
-      case 'agent':
-        return 'Atendente';
-      default:
-        return 'Usuário';
-    }
-  };
-
-  // Get role badge style
-  const getRoleBadgeStyle = (role: UserRole) => {
-    switch (role) {
-      case 'admin':
-        return 'border-red-200 bg-red-50 text-red-800';
-      case 'secretary_admin':
-        return 'border-purple-200 bg-purple-50 text-purple-800';
-      case 'manager':
-        return 'border-blue-200 bg-blue-50 text-blue-800';
-      case 'agent':
-        return 'border-green-200 bg-green-50 text-green-800';
-      default:
-        return 'border-gray-200 bg-gray-50 text-gray-800';
-    }
-  };
-
   const handleSecretaryChange = (value: string, isFilter = false) => {
     if (isFilter) {
-      setFilterSecretaryId(value);
+      setFilterSecretaryId(value || null);
       setFilterDepartmentId(null); // Reset department filter when secretary changes
     } else {
-      setSelectedSecretaryId(value);
+      setSelectedSecretaryId(value || null);
       setNewUser({
         ...newUser,
-        secretaryId: value,
-        secretaryName: mockSecretaries.find(s => s.id === value)?.name,
+        secretaryId: value || null,
+        secretaryName: mockSecretaries.find(s => s.id === value)?.name || null,
         departmentId: null, // Reset department when secretary changes
         departmentName: null,
       });
@@ -350,12 +275,12 @@ const UsersManagement: React.FC = () => {
 
   const handleDepartmentChange = (value: string, isFilter = false) => {
     if (isFilter) {
-      setFilterDepartmentId(value);
+      setFilterDepartmentId(value || null);
     } else {
       setNewUser({
         ...newUser,
-        departmentId: value,
-        departmentName: mockDepartments.find(d => d.id === value)?.name,
+        departmentId: value || null,
+        departmentName: mockDepartments.find(d => d.id === value)?.name || null,
       });
     }
   };
@@ -385,20 +310,13 @@ const UsersManagement: React.FC = () => {
     });
   };
 
-  // Determine which roles current user can create
+  // Get available roles for creating new users
   const getAvailableRoles = () => {
-    if (isAdmin) {
-      return ['admin', 'secretary_admin', 'manager', 'agent'];
-    } else if (isSecretaryAdmin) {
-      return ['manager', 'agent'];
-    } else if (isManager) {
-      return ['agent'];
-    }
-    return [];
+    return getUserAvailableRoles(isAdmin, isSecretaryAdmin, isManager);
   };
 
   // Check if user can add new users
-  const canAddUsers = isAdmin || isSecretaryAdmin || isManager;
+  const canAddUsers = checkCanAddUsers(isAdmin, isSecretaryAdmin, isManager);
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -422,193 +340,24 @@ const UsersManagement: React.FC = () => {
           </div>
 
           {canAddUsers && (
-            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Novo Usuário
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[525px]">
-                <DialogHeader>
-                  <DialogTitle>Adicionar Novo Usuário</DialogTitle>
-                  <DialogDescription>
-                    Preencha os detalhes para adicionar um novo usuário ao sistema
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="name">Nome</Label>
-                    <Input
-                      id="name"
-                      placeholder="Nome completo"
-                      value={newUser.name}
-                      onChange={(e) =>
-                        setNewUser({ ...newUser, name: e.target.value })
-                      }
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="email@exemplo.com"
-                      value={newUser.email}
-                      onChange={(e) =>
-                        setNewUser({ ...newUser, email: e.target.value })
-                      }
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="role">Função</Label>
-                    <Select
-                      value={newUser.role}
-                      onValueChange={(value: UserRole) =>
-                        setNewUser({ ...newUser, role: value })
-                      }
-                    >
-                      <SelectTrigger id="role">
-                        <SelectValue placeholder="Selecione a função" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {getAvailableRoles().map(role => (
-                          <SelectItem key={role} value={role}>
-                            {getRoleName(role as UserRole)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {(newUser.role === 'secretary_admin' || newUser.role === 'manager' || newUser.role === 'agent') && (
-                    <div className="grid gap-2">
-                      <Label htmlFor="secretary">Secretaria</Label>
-                      <Select 
-                        value={newUser.secretaryId || ''}
-                        onValueChange={(value) => handleSecretaryChange(value)}
-                      >
-                        <SelectTrigger id="secretary">
-                          <SelectValue placeholder="Selecione a secretaria" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {availableSecretaries.map(secretary => (
-                            <SelectItem key={secretary.id} value={secretary.id}>
-                              {secretary.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-
-                  {(newUser.role === 'manager' || newUser.role === 'agent') && newUser.secretaryId && (
-                    <div className="grid gap-2">
-                      <Label htmlFor="department">Departamento</Label>
-                      <Select 
-                        value={newUser.departmentId || ''}
-                        onValueChange={(value) => handleDepartmentChange(value)}
-                      >
-                        <SelectTrigger id="department">
-                          <SelectValue placeholder="Selecione o departamento" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {availableDepartments.map(department => (
-                            <SelectItem key={department.id} value={department.id}>
-                              {department.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-
-                  {(newUser.role === 'agent') && (
-                    <div className="grid gap-2">
-                      <Label htmlFor="chats">Atendimentos Simultâneos</Label>
-                      <Input
-                        id="chats"
-                        type="number"
-                        min={1}
-                        max={10}
-                        value={newUser.maxConcurrentChats}
-                        onChange={(e) =>
-                          setNewUser({
-                            ...newUser,
-                            maxConcurrentChats: parseInt(e.target.value),
-                          })
-                        }
-                      />
-                    </div>
-                  )}
-                </div>
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                    Cancelar
-                  </Button>
-                  <Button onClick={handleAddUser}>Adicionar</Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+            <Button onClick={() => setIsAddDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Novo Usuário
+            </Button>
           )}
         </div>
       </div>
 
-      {/* Filters */}
-      {isAdmin && (
-        <Card className="mb-6">
-          <CardHeader className="pb-3">
-            <CardTitle>Filtros</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="filterSecretary">Secretaria</Label>
-                <Select 
-                  value={filterSecretaryId || 'all'}
-                  onValueChange={(value) => handleSecretaryChange(value === 'all' ? '' : value, true)}
-                >
-                  <SelectTrigger id="filterSecretary">
-                    <SelectValue placeholder="Todas as secretarias" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas as secretarias</SelectItem>
-                    {mockSecretaries.map(secretary => (
-                      <SelectItem key={secretary.id} value={secretary.id}>
-                        {secretary.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {filterSecretaryId && (
-                <div>
-                  <Label htmlFor="filterDepartment">Departamento</Label>
-                  <Select 
-                    value={filterDepartmentId || 'all'}
-                    onValueChange={(value) => handleDepartmentChange(value === 'all' ? '' : value, true)}
-                  >
-                    <SelectTrigger id="filterDepartment">
-                      <SelectValue placeholder="Todos os departamentos" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos os departamentos</SelectItem>
-                      {mockDepartments
-                        .filter(d => d.secretaryId === filterSecretaryId)
-                        .map(department => (
-                          <SelectItem key={department.id} value={department.id}>
-                            {department.name}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Filters Component */}
+      <UserFilters
+        isAdmin={isAdmin}
+        mockSecretaries={mockSecretaries}
+        mockDepartments={mockDepartments}
+        filterSecretaryId={filterSecretaryId}
+        filterDepartmentId={filterDepartmentId}
+        handleSecretaryChange={handleSecretaryChange}
+        handleDepartmentChange={handleDepartmentChange}
+      />
 
       <Card>
         <CardHeader>
@@ -618,259 +367,56 @@ const UsersManagement: React.FC = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Função</TableHead>
-                  <TableHead className="hidden md:table-cell">Secretaria</TableHead>
-                  <TableHead className="hidden md:table-cell">Departamento</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredUsers.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="h-24 text-center">
-                      Nenhum usuário encontrado
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredUsers.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell className="font-medium">{user.name}</TableCell>
-                      <TableCell>{user.email}</TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="outline"
-                          className={getRoleBadgeStyle(user.role)}
-                        >
-                          {getRoleName(user.role)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        {user.secretaryName || '-'}
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        {user.departmentName || '-'}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center">
-                          <span
-                            className={`h-2.5 w-2.5 rounded-full mr-2 ${
-                              user.isOnline ? 'bg-green-500' : 'bg-gray-400'
-                            }`}
-                          ></span>
-                          <span>
-                            {user.isOnline ? 'Online' : 'Offline'}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => openEditDialog(user)}>
-                              <Edit className="mr-2 h-4 w-4" />
-                              Editar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => openDeleteDialog(user)}>
-                              <Trash className="mr-2 h-4 w-4" />
-                              Excluir
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
+          <UsersList
+            users={filteredUsers}
+            openEditDialog={openEditDialog}
+            openDeleteDialog={openDeleteDialog}
+            getRoleName={getRoleName}
+            getRoleBadgeStyle={getRoleBadgeStyle}
+          />
         </CardContent>
       </Card>
 
-      {/* Edit Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-[525px]">
-          <DialogHeader>
-            <DialogTitle>Editar Usuário</DialogTitle>
-            <DialogDescription>
-              Atualize os detalhes do usuário
-            </DialogDescription>
-          </DialogHeader>
-          {currentUser && (
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="edit-name">Nome</Label>
-                <Input
-                  id="edit-name"
-                  value={currentUser.name}
-                  onChange={(e) =>
-                    setCurrentUser({ ...currentUser, name: e.target.value })
-                  }
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="edit-email">Email</Label>
-                <Input
-                  id="edit-email"
-                  type="email"
-                  value={currentUser.email}
-                  onChange={(e) =>
-                    setCurrentUser({ ...currentUser, email: e.target.value })
-                  }
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="edit-role">Função</Label>
-                <Select
-                  value={currentUser.role}
-                  onValueChange={(value: UserRole) =>
-                    setCurrentUser({ ...currentUser, role: value })
-                  }
-                  disabled={!isAdmin}
-                >
-                  <SelectTrigger id="edit-role">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {getAvailableRoles().map(role => (
-                      <SelectItem key={role} value={role}>
-                        {getRoleName(role as UserRole)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+      {/* Add User Dialog */}
+      <AddUserDialog
+        isOpen={isAddDialogOpen}
+        setIsOpen={setIsAddDialogOpen}
+        newUser={newUser}
+        setNewUser={setNewUser}
+        handleAddUser={handleAddUser}
+        getAvailableRoles={getAvailableRoles}
+        getRoleName={getRoleName}
+        availableSecretaries={availableSecretaries}
+        availableDepartments={availableDepartments}
+        selectedSecretaryId={selectedSecretaryId}
+        handleSecretaryChange={handleSecretaryChange}
+        handleDepartmentChange={handleDepartmentChange}
+      />
 
-              {(currentUser.role === 'secretary_admin' || currentUser.role === 'manager' || currentUser.role === 'agent') && (
-                <div className="grid gap-2">
-                  <Label htmlFor="edit-secretary">Secretaria</Label>
-                  <Select 
-                    value={currentUser.secretaryId || ''}
-                    onValueChange={(value) => updateCurrentUserSecretary(value)}
-                    disabled={!isAdmin && currentUser.role === 'secretary_admin'}
-                  >
-                    <SelectTrigger id="edit-secretary">
-                      <SelectValue placeholder="Selecione a secretaria" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableSecretaries.map(secretary => (
-                        <SelectItem key={secretary.id} value={secretary.id}>
-                          {secretary.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
+      {/* Edit User Dialog */}
+      <EditUserDialog
+        isOpen={isEditDialogOpen}
+        setIsOpen={setIsEditDialogOpen}
+        currentUser={currentUser}
+        handleEditUser={handleEditUser}
+        getAvailableRoles={getAvailableRoles}
+        getRoleName={getRoleName}
+        availableSecretaries={availableSecretaries}
+        isAdmin={isAdmin}
+        isManager={isManager}
+        mockDepartments={mockDepartments}
+        updateCurrentUserSecretary={updateCurrentUserSecretary}
+        updateCurrentUserDepartment={updateCurrentUserDepartment}
+      />
 
-              {(currentUser.role === 'manager' || currentUser.role === 'agent') && currentUser.secretaryId && (
-                <div className="grid gap-2">
-                  <Label htmlFor="edit-department">Departamento</Label>
-                  <Select 
-                    value={currentUser.departmentId || ''}
-                    onValueChange={(value) => updateCurrentUserDepartment(value)}
-                    disabled={isManager && currentUser.role !== 'agent'}
-                  >
-                    <SelectTrigger id="edit-department">
-                      <SelectValue placeholder="Selecione o departamento" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {mockDepartments
-                        .filter(d => d.secretaryId === currentUser.secretaryId)
-                        .map(department => (
-                          <SelectItem key={department.id} value={department.id}>
-                            {department.name}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
-              {currentUser.role === 'agent' && (
-                <div className="grid gap-2">
-                  <Label htmlFor="edit-chats">Atendimentos Simultâneos</Label>
-                  <Input
-                    id="edit-chats"
-                    type="number"
-                    min={1}
-                    max={10}
-                    value={currentUser.maxConcurrentChats}
-                    onChange={(e) =>
-                      setCurrentUser({
-                        ...currentUser,
-                        maxConcurrentChats: parseInt(e.target.value),
-                      })
-                    }
-                  />
-                </div>
-              )}
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleEditUser}>Salvar Alterações</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Dialog */}
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Confirmar Exclusão</DialogTitle>
-            <DialogDescription>
-              Tem certeza que deseja excluir este usuário? Esta ação é irreversível.
-            </DialogDescription>
-          </DialogHeader>
-          {currentUser && (
-            <div className="py-4">
-              <p>
-                <span className="font-semibold">Nome:</span> {currentUser.name}
-              </p>
-              <p>
-                <span className="font-semibold">Email:</span> {currentUser.email}
-              </p>
-              <p>
-                <span className="font-semibold">Função:</span>{' '}
-                {getRoleName(currentUser.role)}
-              </p>
-              {currentUser.secretaryName && (
-                <p>
-                  <span className="font-semibold">Secretaria:</span>{' '}
-                  {currentUser.secretaryName}
-                </p>
-              )}
-              {currentUser.departmentName && (
-                <p>
-                  <span className="font-semibold">Departamento:</span>{' '}
-                  {currentUser.departmentName}
-                </p>
-              )}
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
-              Cancelar
-            </Button>
-            <Button variant="destructive" onClick={handleDeleteUser}>
-              Excluir
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Delete User Dialog */}
+      <DeleteUserDialog
+        isOpen={isDeleteDialogOpen}
+        setIsOpen={setIsDeleteDialogOpen}
+        currentUser={currentUser}
+        handleDeleteUser={handleDeleteUser}
+        getRoleName={getRoleName}
+      />
     </div>
   );
 };
