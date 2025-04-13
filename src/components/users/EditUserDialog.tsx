@@ -32,6 +32,7 @@ interface EditUserDialogProps {
   mockDepartments: Department[];
   updateCurrentUserSecretary: (value: string) => void;
   updateCurrentUserDepartment: (value: string) => void;
+  isSubmitting?: boolean;
 }
 
 const EditUserDialog: React.FC<EditUserDialogProps> = ({
@@ -47,9 +48,9 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({
   mockDepartments,
   updateCurrentUserSecretary,
   updateCurrentUserDepartment,
+  isSubmitting = false,
 }) => {
   const [localUser, setLocalUser] = useState<User | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Update local state when currentUser changes
   useEffect(() => {
@@ -89,8 +90,6 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({
       return;
     }
     
-    setIsSubmitting(true);
-    
     try {
       // Update the parent component's state by providing the updated user
       if (currentUser) {
@@ -98,13 +97,9 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({
       }
       
       handleEditUser();
-      toast.success('Usuário atualizado com sucesso');
-      setIsOpen(false);
     } catch (error) {
       toast.error('Erro ao atualizar usuário');
       console.error('Error updating user:', error);
-    } finally {
-      setIsSubmitting(false);
     }
   };
 

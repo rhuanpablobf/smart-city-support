@@ -10,6 +10,7 @@ interface DeleteUserDialogProps {
   currentUser: User | null;
   handleDeleteUser: () => void;
   getRoleName: (role: UserRole) => string;
+  isSubmitting?: boolean;
 }
 
 const DeleteUserDialog: React.FC<DeleteUserDialogProps> = ({
@@ -18,13 +19,18 @@ const DeleteUserDialog: React.FC<DeleteUserDialogProps> = ({
   currentUser,
   handleDeleteUser,
   getRoleName,
+  isSubmitting = false,
 }) => {
   if (!currentUser) {
     return null;
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      if (!isSubmitting) {
+        setIsOpen(open);
+      }
+    }}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Confirmar Exclusão</DialogTitle>
@@ -57,11 +63,19 @@ const DeleteUserDialog: React.FC<DeleteUserDialogProps> = ({
           )}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setIsOpen(false)}>
+          <Button 
+            variant="outline" 
+            onClick={() => setIsOpen(false)}
+            disabled={isSubmitting}
+          >
             Cancelar
           </Button>
-          <Button variant="destructive" onClick={handleDeleteUser}>
-            Excluir
+          <Button 
+            variant="destructive" 
+            onClick={handleDeleteUser}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Excluindo...' : 'Excluir'}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -31,6 +31,7 @@ interface AddUserDialogProps {
   selectedSecretaryId: string | null;
   handleSecretaryChange: (value: string) => void;
   handleDepartmentChange: (value: string) => void;
+  isSubmitting?: boolean;
 }
 
 const AddUserDialog: React.FC<AddUserDialogProps> = ({
@@ -46,9 +47,14 @@ const AddUserDialog: React.FC<AddUserDialogProps> = ({
   selectedSecretaryId,
   handleSecretaryChange,
   handleDepartmentChange,
+  isSubmitting = false,
 }) => {
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      if (!isSubmitting) {
+        setIsOpen(open);
+      }
+    }}>
       <DialogContent className="sm:max-w-[525px]">
         <DialogHeader>
           <DialogTitle>Adicionar Novo Usuário</DialogTitle>
@@ -155,7 +161,7 @@ const AddUserDialog: React.FC<AddUserDialogProps> = ({
                 onChange={(e) =>
                   setNewUser({
                     ...newUser,
-                    maxConcurrentChats: parseInt(e.target.value),
+                    maxConcurrentChats: parseInt(e.target.value) || 1,
                   })
                 }
               />
@@ -163,10 +169,19 @@ const AddUserDialog: React.FC<AddUserDialogProps> = ({
           )}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setIsOpen(false)}>
+          <Button 
+            variant="outline" 
+            onClick={() => setIsOpen(false)}
+            disabled={isSubmitting}
+          >
             Cancelar
           </Button>
-          <Button onClick={handleAddUser}>Adicionar</Button>
+          <Button 
+            onClick={handleAddUser}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Adicionando...' : 'Adicionar'}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
