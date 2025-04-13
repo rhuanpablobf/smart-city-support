@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -40,12 +39,34 @@ import {
   Pie,
   Cell,
 } from 'recharts';
-import { mockAgentPerformance, mockDepartmentStats, mockServiceStats } from '@/services/mockData';
+import { 
+  fetchDepartmentStats, 
+  fetchServiceStats, 
+  fetchAgentPerformance 
+} from '@/services/supabaseService';
+import { useQuery } from '@tanstack/react-query';
+import { AgentPerformance, DepartmentStats, ServiceStats } from '@/types/reports';
 
 const Reports: React.FC = () => {
   const [period, setPeriod] = useState('week');
 
-  // Mock data for charts
+  // Fetch data using React Query
+  const { data: departmentStats, isLoading: loadingDepartments } = useQuery({
+    queryKey: ['departmentStats', period],
+    queryFn: fetchDepartmentStats
+  });
+
+  const { data: serviceStats, isLoading: loadingServices } = useQuery({
+    queryKey: ['serviceStats', period],
+    queryFn: fetchServiceStats
+  });
+
+  const { data: agentPerformance, isLoading: loadingAgents } = useQuery({
+    queryKey: ['agentPerformance', period],
+    queryFn: fetchAgentPerformance
+  });
+
+  // Mock data for charts that don't have database equivalents yet
   const attendanceData = [
     { name: 'Seg', total: 34, bot: 20, human: 14 },
     { name: 'Ter', total: 42, bot: 25, human: 17 },
@@ -83,9 +104,18 @@ const Reports: React.FC = () => {
 
   const RESOLUTION_COLORS = ['#2196F3', '#673AB7'];
 
-  const topDepartmentsData = mockDepartmentStats.sort((a, b) => b.totalConversations - a.totalConversations).slice(0, 5);
-  const topServicesData = mockServiceStats.sort((a, b) => b.totalConversations - a.totalConversations).slice(0, 5);
-  const agentPerformanceData = mockAgentPerformance.sort((a, b) => b.satisfactionRate - a.satisfactionRate);
+  // Use the data from the API or empty arrays if still loading
+  const topDepartmentsData = departmentStats 
+    ? [...departmentStats].sort((a, b) => b.totalConversations - a.totalConversations).slice(0, 5)
+    : [];
+    
+  const topServicesData = serviceStats
+    ? [...serviceStats].sort((a, b) => b.totalConversations - a.totalConversations).slice(0, 5)
+    : [];
+    
+  const sortedAgentPerformance = agentPerformance
+    ? [...agentPerformance].sort((a, b) => b.satisfactionRate - a.satisfactionRate)
+    : [];
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -167,6 +197,7 @@ const Reports: React.FC = () => {
 
         <TabsContent value="overview" className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
             <Card>
               <CardHeader>
                 <CardTitle>Atendimentos por Dia</CardTitle>
@@ -323,225 +354,241 @@ const Reports: React.FC = () => {
         </TabsContent>
 
         <TabsContent value="departments" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Desempenho por Secretaria</CardTitle>
-              <CardDescription>
-                Total de atendimentos e taxas de resolução por secretaria
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="pt-2">
-              <div className="h-[400px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={topDepartmentsData}
-                    layout="vertical"
-                    margin={{ left: 120 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis type="number" />
-                    <YAxis
-                      dataKey="departmentName"
-                      type="category"
-                      width={100}
-                      tick={{ fontSize: 12 }}
-                    />
-                    <Tooltip />
-                    <Legend />
-                    <Bar
-                      dataKey="totalConversations"
-                      fill="#2196F3"
-                      name="Total de Atendimentos"
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
+          {loadingDepartments ? (
+            <div className="flex justify-center p-10">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
+            </div>
+          ) : (
+            <>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Desempenho por Secretaria</CardTitle>
+                  <CardDescription>
+                    Total de atendimentos e taxas de resolução por secretaria
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="pt-2">
+                  <div className="h-[400px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={topDepartmentsData}
+                        layout="vertical"
+                        margin={{ left: 120 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis type="number" />
+                        <YAxis
+                          dataKey="departmentName"
+                          type="category"
+                          width={100}
+                          tick={{ fontSize: 12 }}
+                        />
+                        <Tooltip />
+                        <Legend />
+                        <Bar
+                          dataKey="totalConversations"
+                          fill="#2196F3"
+                          name="Total de Atendimentos"
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Taxa de Resolução via Bot</CardTitle>
+                    <CardDescription>
+                      Percentual de atendimentos resolvidos automaticamente
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-2">
+                    <div className="h-[300px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={topDepartmentsData}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis 
+                            dataKey="departmentName" 
+                            angle={-45} 
+                            textAnchor="end" 
+                            height={60} 
+                            tick={{fontSize: 12}}
+                          />
+                          <YAxis
+                            tickFormatter={(value) => `${(value * 100).toFixed(0)}%`}
+                          />
+                          <Tooltip 
+                            formatter={(value) => [`${(Number(value) * 100).toFixed(1)}%`, 'Taxa de resolução']}
+                          />
+                          <Bar
+                            dataKey="botResolutionRate"
+                            fill="#4CAF50"
+                            name="Taxa de Resolução via Bot"
+                          />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Tempo Médio de Espera</CardTitle>
+                    <CardDescription>
+                      Em segundos, por secretaria
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-2">
+                    <div className="h-[300px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={topDepartmentsData}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis 
+                            dataKey="departmentName" 
+                            angle={-45} 
+                            textAnchor="end" 
+                            height={60}
+                            tick={{fontSize: 12}} 
+                          />
+                          <YAxis />
+                          <Tooltip formatter={(value) => [`${value}s`, 'Tempo de espera']} />
+                          <Bar
+                            dataKey="avgWaitTime"
+                            fill="#FF9800"
+                            name="Tempo Médio de Espera (s)"
+                          />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
-            </CardContent>
-          </Card>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Taxa de Resolução via Bot</CardTitle>
-                <CardDescription>
-                  Percentual de atendimentos resolvidos automaticamente
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="pt-2">
-                <div className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={topDepartmentsData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis 
-                        dataKey="departmentName" 
-                        angle={-45} 
-                        textAnchor="end" 
-                        height={60} 
-                        tick={{fontSize: 12}}
-                      />
-                      <YAxis
-                        tickFormatter={(value) => `${(value * 100).toFixed(0)}%`}
-                      />
-                      <Tooltip 
-                        formatter={(value) => [`${(Number(value) * 100).toFixed(1)}%`, 'Taxa de resolução']}
-                      />
-                      <Bar
-                        dataKey="botResolutionRate"
-                        fill="#4CAF50"
-                        name="Taxa de Resolução via Bot"
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Tempo Médio de Espera</CardTitle>
-                <CardDescription>
-                  Em segundos, por secretaria
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="pt-2">
-                <div className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={topDepartmentsData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis 
-                        dataKey="departmentName" 
-                        angle={-45} 
-                        textAnchor="end" 
-                        height={60}
-                        tick={{fontSize: 12}} 
-                      />
-                      <YAxis />
-                      <Tooltip formatter={(value) => [`${value}s`, 'Tempo de espera']} />
-                      <Bar
-                        dataKey="avgWaitTime"
-                        fill="#FF9800"
-                        name="Tempo Médio de Espera (s)"
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+            </>
+          )}
         </TabsContent>
 
         <TabsContent value="agents" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Desempenho dos Atendentes</CardTitle>
-              <CardDescription>
-                Métricas de desempenho por atendente
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="relative overflow-x-auto">
-                <table className="w-full text-sm text-left">
-                  <thead className="text-xs uppercase bg-gray-50">
-                    <tr>
-                      <th scope="col" className="px-6 py-3">
-                        Atendente
-                      </th>
-                      <th scope="col" className="px-6 py-3">
-                        Total
-                      </th>
-                      <th scope="col" className="px-6 py-3">
-                        Tempo de Resposta
-                      </th>
-                      <th scope="col" className="px-6 py-3">
-                        Tempo de Atendimento
-                      </th>
-                      <th scope="col" className="px-6 py-3">
-                        Satisfação
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {agentPerformanceData.map((agent) => (
-                      <tr key={agent.agentId} className="bg-white border-b">
-                        <td className="px-6 py-4 font-medium">
-                          {agent.agentName}
-                        </td>
-                        <td className="px-6 py-4">
-                          {agent.totalConversations}
-                        </td>
-                        <td className="px-6 py-4">
-                          {agent.avgResponseTime}s
-                        </td>
-                        <td className="px-6 py-4">
-                          {(agent.avgHandlingTime / 60).toFixed(1)} min
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center">
-                            {agent.satisfactionRate}
-                            <Star className="h-4 w-4 text-yellow-500 ml-1" />
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+          {loadingAgents ? (
+            <div className="flex justify-center p-10">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
+            </div>
+          ) : (
+            <>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Desempenho dos Atendentes</CardTitle>
+                  <CardDescription>
+                    Métricas de desempenho por atendente
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="relative overflow-x-auto">
+                    <table className="w-full text-sm text-left">
+                      <thead className="text-xs uppercase bg-gray-50">
+                        <tr>
+                          <th scope="col" className="px-6 py-3">
+                            Atendente
+                          </th>
+                          <th scope="col" className="px-6 py-3">
+                            Total
+                          </th>
+                          <th scope="col" className="px-6 py-3">
+                            Tempo de Resposta
+                          </th>
+                          <th scope="col" className="px-6 py-3">
+                            Tempo de Atendimento
+                          </th>
+                          <th scope="col" className="px-6 py-3">
+                            Satisfação
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {sortedAgentPerformance.map((agent) => (
+                          <tr key={agent.agentId} className="bg-white border-b">
+                            <td className="px-6 py-4 font-medium">
+                              {agent.agentName}
+                            </td>
+                            <td className="px-6 py-4">
+                              {agent.totalConversations}
+                            </td>
+                            <td className="px-6 py-4">
+                              {agent.avgResponseTime}s
+                            </td>
+                            <td className="px-6 py-4">
+                              {(agent.avgHandlingTime / 60).toFixed(1)} min
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="flex items-center">
+                                {agent.satisfactionRate}
+                                <Star className="h-4 w-4 text-yellow-500 ml-1" />
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Total de Atendimentos</CardTitle>
+                    <CardDescription>
+                      Por atendente no período selecionado
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-2">
+                    <div className="h-[300px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={sortedAgentPerformance}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="agentName" />
+                          <YAxis />
+                          <Tooltip />
+                          <Bar
+                            dataKey="totalConversations"
+                            fill="#2196F3"
+                            name="Total de Atendimentos"
+                          />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Tempo Médio de Resposta</CardTitle>
+                    <CardDescription>
+                      Em segundos, por atendente
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-2">
+                    <div className="h-[300px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={sortedAgentPerformance}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="agentName" />
+                          <YAxis />
+                          <Tooltip formatter={(value) => [`${value}s`, 'Tempo médio']} />
+                          <Bar
+                            dataKey="avgResponseTime"
+                            fill="#FF9800"
+                            name="Tempo Médio (s)"
+                          />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
-            </CardContent>
-          </Card>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Total de Atendimentos</CardTitle>
-                <CardDescription>
-                  Por atendente no período selecionado
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="pt-2">
-                <div className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={agentPerformanceData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="agentName" />
-                      <YAxis />
-                      <Tooltip />
-                      <Bar
-                        dataKey="totalConversations"
-                        fill="#2196F3"
-                        name="Total de Atendimentos"
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Tempo Médio de Resposta</CardTitle>
-                <CardDescription>
-                  Em segundos, por atendente
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="pt-2">
-                <div className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={agentPerformanceData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="agentName" />
-                      <YAxis />
-                      <Tooltip formatter={(value) => [`${value}s`, 'Tempo médio']} />
-                      <Bar
-                        dataKey="avgResponseTime"
-                        fill="#FF9800"
-                        name="Tempo Médio (s)"
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+            </>
+          )}
         </TabsContent>
       </Tabs>
     </div>

@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Department, Service, Conversation, Message, MessageType } from "@/types/chat";
 import { v4 as uuidv4 } from 'uuid';
 import { User } from "@/types/auth";
+import { AgentPerformance, DepartmentStats, ServiceStats } from "@/types/reports";
 
 // Departments
 export const fetchDepartments = async (): Promise<Department[]> => {
@@ -37,6 +38,118 @@ export const fetchDepartments = async (): Promise<Department[]> => {
   }));
 
   return departments;
+};
+
+// Fetch department statistics
+export const fetchDepartmentStats = async (): Promise<DepartmentStats[]> => {
+  try {
+    // Fetch departments
+    const { data: departments, error: deptError } = await supabase
+      .from('departments')
+      .select('id, name');
+
+    if (deptError) throw deptError;
+
+    // Create stats for each department with placeholder data
+    // In a real application, you would calculate these from actual conversation data
+    return departments.map((dept: any) => ({
+      departmentId: dept.id,
+      departmentName: dept.name,
+      totalConversations: Math.floor(Math.random() * 100) + 50,
+      botResolutionRate: Math.random() * 0.6 + 0.2,
+      avgWaitTime: Math.floor(Math.random() * 60) + 20,
+      satisfactionRate: (Math.random() * 1.5 + 3.5).toFixed(1) as unknown as number
+    }));
+  } catch (error) {
+    console.error('Error fetching department stats:', error);
+    throw error;
+  }
+};
+
+// Fetch service statistics
+export const fetchServiceStats = async (): Promise<ServiceStats[]> => {
+  try {
+    // Fetch services with their departments
+    const { data: services, error: serviceError } = await supabase
+      .from('services')
+      .select(`
+        id, 
+        name, 
+        department_id,
+        departments:department_id (
+          name
+        )
+      `);
+
+    if (serviceError) throw serviceError;
+
+    // Create stats for each service with placeholder data
+    return services.map((serv: any) => ({
+      serviceId: serv.id,
+      serviceName: serv.name,
+      departmentId: serv.department_id,
+      departmentName: serv.departments?.name || 'Unknown Department',
+      totalConversations: Math.floor(Math.random() * 50) + 10,
+      botResolutionRate: Math.random() * 0.7 + 0.1,
+      avgHandlingTime: Math.floor(Math.random() * 300) + 60,
+      satisfactionRate: (Math.random() * 1.5 + 3.5).toFixed(1) as unknown as number
+    }));
+  } catch (error) {
+    console.error('Error fetching service stats:', error);
+    throw error;
+  }
+};
+
+// Agent performance statistics (using mock data as there's no agents table yet)
+export const fetchAgentPerformance = async (): Promise<AgentPerformance[]> => {
+  // This is still mock data since we don't have an agents table yet
+  return [
+    {
+      agentId: '1',
+      agentName: 'João Silva',
+      totalConversations: 78,
+      avgResponseTime: 23,
+      avgHandlingTime: 342,
+      satisfactionRate: 4.8,
+      transferRate: 0.12
+    },
+    {
+      agentId: '2',
+      agentName: 'Maria Oliveira',
+      totalConversations: 65,
+      avgResponseTime: 18,
+      avgHandlingTime: 290,
+      satisfactionRate: 4.9,
+      transferRate: 0.08
+    },
+    {
+      agentId: '3',
+      agentName: 'Carlos Santos',
+      totalConversations: 82,
+      avgResponseTime: 25,
+      avgHandlingTime: 310,
+      satisfactionRate: 4.7,
+      transferRate: 0.15
+    },
+    {
+      agentId: '4',
+      agentName: 'Ana Pereira',
+      totalConversations: 58,
+      avgResponseTime: 22,
+      avgHandlingTime: 278,
+      satisfactionRate: 4.6,
+      transferRate: 0.18
+    },
+    {
+      agentId: '5',
+      agentName: 'Pedro Costa',
+      totalConversations: 43,
+      avgResponseTime: 20,
+      avgHandlingTime: 265,
+      satisfactionRate: 4.5,
+      transferRate: 0.14
+    }
+  ];
 };
 
 // Conversations
