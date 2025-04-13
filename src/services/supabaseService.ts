@@ -1,9 +1,8 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Department, Service, Conversation, Message, MessageType } from "@/types/chat";
 import { v4 as uuidv4 } from 'uuid';
 import { User } from "@/types/auth";
-import { AgentPerformance, DepartmentStats, ServiceStats, SatisfactionSurvey } from "@/types/reports";
+import { AgentPerformance, DepartmentStats, OverviewStats, ServiceStats, SatisfactionSurvey } from "@/types/reports";
 
 // Departments
 export const fetchDepartments = async (): Promise<Department[]> => {
@@ -43,37 +42,18 @@ export const fetchDepartments = async (): Promise<Department[]> => {
 // Fetch department statistics
 export const fetchDepartmentStats = async (): Promise<DepartmentStats[]> => {
   try {
-    // Fetch actual department statistics from the database
-    const { data: statsData, error: statsError } = await supabase
+    // Fetch department statistics from the database
+    const { data, error } = await supabase
       .from('department_stats')
       .select('*');
 
-    if (statsError) {
-      console.error('Error fetching department stats:', statsError);
-      throw statsError;
-    }
-
-    // If no stats data exists yet, fetch departments and create placeholder stats
-    if (!statsData || statsData.length === 0) {
-      const { data: departments, error: deptError } = await supabase
-        .from('departments')
-        .select('id, name');
-
-      if (deptError) throw deptError;
-
-      // Create stats for each department with placeholder data
-      return departments.map((dept: any) => ({
-        departmentId: dept.id,
-        departmentName: dept.name,
-        totalConversations: Math.floor(Math.random() * 100) + 50,
-        botResolutionRate: Math.random() * 0.6 + 0.2,
-        avgWaitTime: Math.floor(Math.random() * 60) + 20,
-        satisfactionRate: Number((Math.random() * 1.5 + 3.5).toFixed(1))
-      }));
+    if (error) {
+      console.error('Error fetching department stats:', error);
+      throw error;
     }
 
     // Transform the data to match our DepartmentStats type
-    return statsData.map((stat: any) => ({
+    return data.map((stat: any) => ({
       departmentId: stat.department_id,
       departmentName: stat.department_name,
       totalConversations: stat.total_conversations,
@@ -90,47 +70,18 @@ export const fetchDepartmentStats = async (): Promise<DepartmentStats[]> => {
 // Fetch service statistics
 export const fetchServiceStats = async (): Promise<ServiceStats[]> => {
   try {
-    // Fetch actual service statistics from the database
-    const { data: statsData, error: statsError } = await supabase
+    // Fetch service statistics from the database
+    const { data, error } = await supabase
       .from('service_stats')
       .select('*');
 
-    if (statsError) {
-      console.error('Error fetching service stats:', statsError);
-      throw statsError;
-    }
-
-    // If no stats data exists yet, fetch services and create placeholder stats
-    if (!statsData || statsData.length === 0) {
-      // Fetch services with their departments
-      const { data: services, error: serviceError } = await supabase
-        .from('services')
-        .select(`
-          id, 
-          name, 
-          department_id,
-          departments:department_id (
-            name
-          )
-        `);
-
-      if (serviceError) throw serviceError;
-
-      // Create stats for each service with placeholder data
-      return services.map((serv: any) => ({
-        serviceId: serv.id,
-        serviceName: serv.name,
-        departmentId: serv.department_id,
-        departmentName: serv.departments?.name || 'Unknown Department',
-        totalConversations: Math.floor(Math.random() * 50) + 10,
-        botResolutionRate: Math.random() * 0.7 + 0.1,
-        avgHandlingTime: Math.floor(Math.random() * 300) + 60,
-        satisfactionRate: Number((Math.random() * 1.5 + 3.5).toFixed(1))
-      }));
+    if (error) {
+      console.error('Error fetching service stats:', error);
+      throw error;
     }
 
     // Transform the data to match our ServiceStats type
-    return statsData.map((stat: any) => ({
+    return data.map((stat: any) => ({
       serviceId: stat.service_id,
       serviceName: stat.service_name,
       departmentId: stat.department_id,
@@ -149,69 +100,18 @@ export const fetchServiceStats = async (): Promise<ServiceStats[]> => {
 // Agent performance statistics
 export const fetchAgentPerformance = async (): Promise<AgentPerformance[]> => {
   try {
-    // Fetch actual agent performance data from the database
-    const { data: performanceData, error: perfError } = await supabase
+    // Fetch agent performance data from the database
+    const { data, error } = await supabase
       .from('agent_performance')
       .select('*');
 
-    if (perfError) {
-      console.error('Error fetching agent performance:', perfError);
-      throw perfError;
-    }
-
-    // If no performance data exists yet, return mock data
-    if (!performanceData || performanceData.length === 0) {
-      return [
-        {
-          agentId: '1',
-          agentName: 'João Silva',
-          totalConversations: 78,
-          avgResponseTime: 23,
-          avgHandlingTime: 342,
-          satisfactionRate: 4.8,
-          transferRate: 0.12
-        },
-        {
-          agentId: '2',
-          agentName: 'Maria Oliveira',
-          totalConversations: 65,
-          avgResponseTime: 18,
-          avgHandlingTime: 290,
-          satisfactionRate: 4.9,
-          transferRate: 0.08
-        },
-        {
-          agentId: '3',
-          agentName: 'Carlos Santos',
-          totalConversations: 82,
-          avgResponseTime: 25,
-          avgHandlingTime: 310,
-          satisfactionRate: 4.7,
-          transferRate: 0.15
-        },
-        {
-          agentId: '4',
-          agentName: 'Ana Pereira',
-          totalConversations: 58,
-          avgResponseTime: 22,
-          avgHandlingTime: 278,
-          satisfactionRate: 4.6,
-          transferRate: 0.18
-        },
-        {
-          agentId: '5',
-          agentName: 'Pedro Costa',
-          totalConversations: 43,
-          avgResponseTime: 20,
-          avgHandlingTime: 265,
-          satisfactionRate: 4.5,
-          transferRate: 0.14
-        }
-      ];
+    if (error) {
+      console.error('Error fetching agent performance:', error);
+      throw error;
     }
 
     // Transform the data to match our AgentPerformance type
-    return performanceData.map((perf: any) => ({
+    return data.map((perf: any) => ({
       agentId: perf.agent_id,
       agentName: perf.agent_name,
       totalConversations: perf.total_conversations,
@@ -227,7 +127,7 @@ export const fetchAgentPerformance = async (): Promise<AgentPerformance[]> => {
 };
 
 // Fetch overview statistics
-export const fetchOverviewStats = async () => {
+export const fetchOverviewStats = async (): Promise<OverviewStats> => {
   try {
     // Fetch daily attendance data
     const { data: attendanceData, error: attendanceError } = await supabase
@@ -283,81 +183,38 @@ export const fetchOverviewStats = async () => {
       throw kpiError;
     }
 
-    // If any data is missing, use default values
-    const defaultAttendanceData = [
-      { name: 'Seg', total: 34, bot: 20, human: 14 },
-      { name: 'Ter', total: 42, bot: 25, human: 17 },
-      { name: 'Qua', total: 38, bot: 22, human: 16 },
-      { name: 'Qui', total: 48, bot: 30, human: 18 },
-      { name: 'Sex', total: 56, bot: 35, human: 21 },
-      { name: 'Sáb', total: 22, bot: 15, human: 7 },
-      { name: 'Dom', total: 18, bot: 12, human: 6 },
-    ];
-
-    const defaultResponseTimeData = [
-      { name: 'Seg', avg: 45 },
-      { name: 'Ter', avg: 52 },
-      { name: 'Qua', avg: 38 },
-      { name: 'Qui', avg: 42 },
-      { name: 'Sex', avg: 35 },
-      { name: 'Sáb', avg: 30 },
-      { name: 'Dom', avg: 28 },
-    ];
-
-    const defaultSatisfactionData = [
-      { name: '5 estrelas', value: 58 },
-      { name: '4 estrelas', value: 24 },
-      { name: '3 estrelas', value: 12 },
-      { name: '2 estrelas', value: 4 },
-      { name: '1 estrela', value: 2 },
-    ];
-
-    const defaultResolutionData = [
-      { name: 'Bot', value: 65 },
-      { name: 'Humano', value: 35 },
-    ];
-
-    const defaultKpiData = {
-      total_attendances: 248,
-      total_growth: '+12%',
-      response_time: '38s',
-      response_time_change: '-5s',
-      satisfaction: 4.7,
-      satisfaction_change: '+0.2'
-    };
-    
+    // Format and return the combined data
     return {
-      attendanceData: attendanceData && attendanceData.length > 0 
-        ? attendanceData.map(item => ({
-            name: item.day_name,
-            total: item.total,
-            bot: item.bot,
-            human: item.human
-          }))
-        : defaultAttendanceData,
+      attendanceData: attendanceData.map((item: any) => ({
+        name: item.day_name,
+        total: item.total,
+        bot: item.bot,
+        human: item.human
+      })),
         
-      responseTimeData: responseTimeData && responseTimeData.length > 0
-        ? responseTimeData.map(item => ({
-            name: item.day_name,
-            avg: item.avg_time
-          }))
-        : defaultResponseTimeData,
+      responseTimeData: responseTimeData.map((item: any) => ({
+        name: item.day_name,
+        avg: item.avg_time
+      })),
         
-      satisfactionData: satisfactionData && satisfactionData.length > 0
-        ? satisfactionData.map(item => ({
-            name: `${item.rating} estrelas`,
-            value: item.count
-          }))
-        : defaultSatisfactionData,
+      satisfactionData: satisfactionData.map((item: any) => ({
+        name: `${item.rating} estrelas`,
+        value: item.count
+      })),
         
-      resolutionData: resolutionData && resolutionData.length > 0
-        ? resolutionData.map(item => ({
-            name: item.resolution_type,
-            value: item.percentage
-          }))
-        : defaultResolutionData,
+      resolutionData: resolutionData.map((item: any) => ({
+        name: item.resolution_type,
+        value: item.percentage
+      })),
         
-      kpiData: kpiData || defaultKpiData
+      kpiData: {
+        total_attendances: kpiData.total_attendances,
+        total_growth: kpiData.total_growth,
+        response_time: kpiData.response_time,
+        response_time_change: kpiData.response_time_change,
+        satisfaction: kpiData.satisfaction,
+        satisfaction_change: kpiData.satisfaction_change
+      }
     };
   } catch (error) {
     console.error('Error fetching overview stats:', error);

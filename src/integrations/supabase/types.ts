@@ -9,6 +9,45 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      agent_performance: {
+        Row: {
+          agent_id: string
+          agent_name: string
+          avg_handling_time: number
+          avg_response_time: number
+          created_at: string | null
+          id: string
+          period: string
+          satisfaction_rate: number
+          total_conversations: number
+          transfer_rate: number
+        }
+        Insert: {
+          agent_id: string
+          agent_name: string
+          avg_handling_time: number
+          avg_response_time: number
+          created_at?: string | null
+          id?: string
+          period?: string
+          satisfaction_rate: number
+          total_conversations: number
+          transfer_rate: number
+        }
+        Update: {
+          agent_id?: string
+          agent_name?: string
+          avg_handling_time?: number
+          avg_response_time?: number
+          created_at?: string | null
+          id?: string
+          period?: string
+          satisfaction_rate?: number
+          total_conversations?: number
+          transfer_rate?: number
+        }
+        Relationships: []
+      }
       conversations: {
         Row: {
           agent_id: string | null
@@ -69,6 +108,104 @@ export type Database = {
           },
         ]
       }
+      daily_attendance: {
+        Row: {
+          bot: number
+          created_at: string | null
+          day_name: string
+          human: number
+          id: string
+          period: string
+          total: number
+        }
+        Insert: {
+          bot: number
+          created_at?: string | null
+          day_name: string
+          human: number
+          id?: string
+          period?: string
+          total: number
+        }
+        Update: {
+          bot?: number
+          created_at?: string | null
+          day_name?: string
+          human?: number
+          id?: string
+          period?: string
+          total?: number
+        }
+        Relationships: []
+      }
+      daily_response_time: {
+        Row: {
+          avg_time: number
+          created_at: string | null
+          day_name: string
+          id: string
+          period: string
+        }
+        Insert: {
+          avg_time: number
+          created_at?: string | null
+          day_name: string
+          id?: string
+          period?: string
+        }
+        Update: {
+          avg_time?: number
+          created_at?: string | null
+          day_name?: string
+          id?: string
+          period?: string
+        }
+        Relationships: []
+      }
+      department_stats: {
+        Row: {
+          avg_wait_time: number
+          bot_resolution_rate: number
+          created_at: string | null
+          department_id: string | null
+          department_name: string
+          id: string
+          period: string
+          satisfaction_rate: number
+          total_conversations: number
+        }
+        Insert: {
+          avg_wait_time: number
+          bot_resolution_rate: number
+          created_at?: string | null
+          department_id?: string | null
+          department_name: string
+          id?: string
+          period?: string
+          satisfaction_rate: number
+          total_conversations: number
+        }
+        Update: {
+          avg_wait_time?: number
+          bot_resolution_rate?: number
+          created_at?: string | null
+          department_id?: string | null
+          department_name?: string
+          id?: string
+          period?: string
+          satisfaction_rate?: number
+          total_conversations?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "department_stats_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       departments: {
         Row: {
           created_at: string | null
@@ -84,6 +221,42 @@ export type Database = {
           created_at?: string | null
           id?: string
           name?: string
+        }
+        Relationships: []
+      }
+      kpi_data: {
+        Row: {
+          created_at: string | null
+          id: string
+          period: string
+          response_time: string
+          response_time_change: string
+          satisfaction: number
+          satisfaction_change: string
+          total_attendances: number
+          total_growth: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          period?: string
+          response_time: string
+          response_time_change: string
+          satisfaction: number
+          satisfaction_change: string
+          total_attendances: number
+          total_growth: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          period?: string
+          response_time?: string
+          response_time_change?: string
+          satisfaction?: number
+          satisfaction_change?: string
+          total_attendances?: number
+          total_growth?: string
         }
         Relationships: []
       }
@@ -133,6 +306,111 @@ export type Database = {
             columns: ["conversation_id"]
             isOneToOne: false
             referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      resolution_distribution: {
+        Row: {
+          created_at: string | null
+          id: string
+          percentage: number
+          period: string
+          resolution_type: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          percentage: number
+          period?: string
+          resolution_type: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          percentage?: number
+          period?: string
+          resolution_type?: string
+        }
+        Relationships: []
+      }
+      satisfaction_distribution: {
+        Row: {
+          count: number
+          created_at: string | null
+          id: string
+          period: string
+          rating: number
+        }
+        Insert: {
+          count: number
+          created_at?: string | null
+          id?: string
+          period?: string
+          rating: number
+        }
+        Update: {
+          count?: number
+          created_at?: string | null
+          id?: string
+          period?: string
+          rating?: number
+        }
+        Relationships: []
+      }
+      service_stats: {
+        Row: {
+          avg_handling_time: number
+          bot_resolution_rate: number
+          created_at: string | null
+          department_id: string | null
+          department_name: string
+          id: string
+          period: string
+          satisfaction_rate: number
+          service_id: string | null
+          service_name: string
+          total_conversations: number
+        }
+        Insert: {
+          avg_handling_time: number
+          bot_resolution_rate: number
+          created_at?: string | null
+          department_id?: string | null
+          department_name: string
+          id?: string
+          period?: string
+          satisfaction_rate: number
+          service_id?: string | null
+          service_name: string
+          total_conversations: number
+        }
+        Update: {
+          avg_handling_time?: number
+          bot_resolution_rate?: number
+          created_at?: string | null
+          department_id?: string | null
+          department_name?: string
+          id?: string
+          period?: string
+          satisfaction_rate?: number
+          service_id?: string | null
+          service_name?: string
+          total_conversations?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_stats_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_stats_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
             referencedColumns: ["id"]
           },
         ]

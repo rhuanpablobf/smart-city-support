@@ -26,22 +26,22 @@ const Reports: React.FC = () => {
   // Fetch data using React Query
   const { data: departmentStats, isLoading: loadingDepartments } = useQuery({
     queryKey: ['departmentStats', period],
-    queryFn: fetchDepartmentStats
+    queryFn: () => fetchDepartmentStats()
   });
 
   const { data: serviceStats, isLoading: loadingServices } = useQuery({
     queryKey: ['serviceStats', period],
-    queryFn: fetchServiceStats
+    queryFn: () => fetchServiceStats()
   });
 
   const { data: agentPerformance, isLoading: loadingAgents } = useQuery({
     queryKey: ['agentPerformance', period],
-    queryFn: fetchAgentPerformance
+    queryFn: () => fetchAgentPerformance()
   });
 
   const { data: overviewStats, isLoading: loadingOverview } = useQuery({
     queryKey: ['overviewStats', period],
-    queryFn: fetchOverviewStats
+    queryFn: () => fetchOverviewStats()
   });
 
   const isLoading = loadingDepartments || loadingServices || loadingAgents || loadingOverview;
