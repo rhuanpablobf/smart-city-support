@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import ChatWindow from '@/components/chat/ChatWindow';
 import ConversationList from '@/components/chat/ConversationList';
 import { Conversation, Message } from '@/types/chat';
@@ -10,6 +11,7 @@ import { toast } from 'sonner';
 
 const Dashboard: React.FC = () => {
   const { authState } = useAuth();
+  const navigate = useNavigate();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | undefined>(undefined);
   const [loading, setLoading] = useState(true);
@@ -36,7 +38,8 @@ const Dashboard: React.FC = () => {
   }, []);
 
   const handleSelectConversation = (conversation: Conversation) => {
-    setSelectedConversation(conversation);
+    // Navigate to dedicated chat page
+    navigate(`/chat/${conversation.id}`);
   };
 
   const handleSendMessage = (content: string, conversationId?: string) => {
@@ -163,7 +166,7 @@ const Dashboard: React.FC = () => {
       setTimeout(() => {
         const responses = [
           "Entendi, obrigado pela informação.",
-          "Poderia me dar mais detalhes, por favor?",
+          "Poderia me dar mais detalhes sobre isso, por favor?",
           "Estou verificando isso para você.",
           "Vou encaminhar sua solicitação ao setor responsável.",
           "Isso deve ser resolvido em breve."
