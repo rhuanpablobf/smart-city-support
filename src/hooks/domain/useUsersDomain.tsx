@@ -1,20 +1,67 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { User, UserRole } from '@/types/auth';
-import { mockAgents } from '@/services/mockData';
 import { toast } from 'sonner';
-import { mockSecretaries, mockDepartments } from '@/utils/userManagement';
+import { supabase } from '@/services/base/supabaseBase';
 
-export function useUsersDomain(currentUserRole: UserRole | undefined, currentUserSecretaryId?: string | null, currentUserDepartmentId?: string | null) {
-  const [users, setUsers] = useState<User[]>([...mockAgents]);
+export function useUsersDomain(
+  currentUserRole: UserRole | undefined, 
+  currentUserSecretaryId?: string | null, 
+  currentUserDepartmentId?: string | null
+) {
+  const [users, setUsers] = useState<User[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Role-based access control
   const isAdmin = currentUserRole === 'admin';
   const isSecretaryAdmin = currentUserRole === 'secretary_admin';
   const isManager = currentUserRole === 'manager';
 
-  const handleAddUser = (newUser: Partial<User>) => {
+  // Fetch users from Supabase
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        setIsLoading(true);
+        const { data, error } = await supabase
+          .from('app_users')
+          .select('*');
+
+        if (error) {
+          console.error('Error fetching users:', error);
+          toast.error('Erro ao carregar usuários');
+          return;
+        }
+
+        // Map Supabase data to our User type
+        const mappedUsers: User[] = data.map((user: any) => ({
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role as UserRole,
+          isOnline: user.is_online,
+          status: user.status,
+          maxConcurrentChats: user.max_concurrent_chats,
+          secretaryId: user.secretary_id,
+          secretaryName: user.secretary_name,
+          departmentId: user.department_id,
+          departmentName: user.department_name,
+          avatar: user.avatar || '/placeholder.svg',
+        }));
+
+        setUsers(mappedUsers);
+      } catch (error) {
+        console.error('Error in fetchUsers:', error);
+        toast.error('Erro ao carregar usuários');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUsers();
+  }, []);
+
+  const handleAddUser = async (newUser: Partial<User>) => {
     // Validate inputs
     if (!newUser.name || !newUser.email || !newUser.role) {
       toast.error('Por favor, preencha todos os campos obrigatórios');
@@ -47,56 +94,71 @@ export function useUsersDomain(currentUserRole: UserRole | undefined, currentUse
     setIsSubmitting(true);
     
     try {
-      // Get secretary and department names
-      let secretaryName = null;
-      let departmentName = null;
-      
-      if (newUser.secretaryId) {
-        const secretary = mockSecretaries.find(s => s.id === newUser.secretaryId);
-        secretaryName = secretary ? secretary.name : null;
-      }
-      
-      if (newUser.departmentId) {
-        const department = mockDepartments.find(d => d.id === newUser.departmentId);
-        departmentName = department ? department.name : null;
-      }
-      
-      // Admin always starts with offline status
+      // Admin sempre inicia com status offline
       const isOfflineByDefault = newUser.role === 'admin';
       
-      // Create new user
-      const user: User = {
-        id: `user${Date.now()}`,
-        name: newUser.name,
-        email: newUser.email,
-        role: newUser.role as UserRole,
-        isOnline: !isOfflineByDefault,
-        status: isOfflineByDefault ? 'offline' : 'online',
-        maxConcurrentChats: newUser.maxConcurrentChats || 5,
-        secretaryId: newUser.secretaryId || null,
-        secretaryName: secretaryName,
-        departmentId: newUser.departmentId || null,
-        departmentName: departmentName,
-        avatar: '/placeholder.svg',
+      // Inserir usuário no Supabase
+      const { data, error } = await supabase
+        .from('app_users')
+        .insert({
+          name: newUser.name,
+          email: newUser.email,
+          role: newUser.role,
+          is_online: !isOfflineByDefault,
+          status: isOfflineByDefault ? 'offline' : 'online',
+          max_concurrent_chats: newUser.maxConcurrentChats || 5,
+          secretary_id: newUser.secretaryId,
+          secretary_name: newUser.secretaryName,
+          department_id: newUser.departmentId,
+          department_name: newUser.departmentName,
+          avatar: '/placeholder.svg',
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error adding user:', error);
+        if (error.code === '23505') {
+          toast.error('Email já cadastrado');
+        } else {
+          toast.error('Erro ao adicionar usuário');
+        }
+        return false;
+      }
+
+      // Map the returned data to our User type
+      const newUserData: User = {
+        id: data.id,
+        name: data.name,
+        email: data.email,
+        role: data.role as UserRole,
+        isOnline: data.is_online,
+        status: data.status,
+        maxConcurrentChats: data.max_concurrent_chats,
+        secretaryId: data.secretary_id,
+        secretaryName: data.secretary_name,
+        departmentId: data.department_id,
+        departmentName: data.department_name,
+        avatar: data.avatar,
       };
       
       // Add user to list
-      setUsers((prevUsers) => [...prevUsers, user]);
+      setUsers(prevUsers => [...prevUsers, newUserData]);
       
       // Show success message
       toast.success('Usuário adicionado com sucesso');
       
       return true;
     } catch (error) {
+      console.error('Error in handleAddUser:', error);
       toast.error('Erro ao adicionar usuário');
-      console.error('Error adding user:', error);
       return false;
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleEditUser = (currentUser: User | null) => {
+  const handleEditUser = async (currentUser: User | null) => {
     if (!currentUser) return false;
     
     setIsSubmitting(true);
@@ -122,14 +184,38 @@ export function useUsersDomain(currentUserRole: UserRole | undefined, currentUse
         return false;
       }
       
-      // Simulate API call delay (in a real app, this would be an actual API call)
-      console.log('Saving user to database:', currentUser);
+      // Update user in Supabase
+      const { error } = await supabase
+        .from('app_users')
+        .update({
+          name: currentUser.name,
+          email: currentUser.email,
+          role: currentUser.role,
+          is_online: currentUser.isOnline,
+          status: currentUser.status,
+          max_concurrent_chats: currentUser.maxConcurrentChats,
+          secretary_id: currentUser.secretaryId,
+          secretary_name: currentUser.secretaryName,
+          department_id: currentUser.departmentId,
+          department_name: currentUser.departmentName,
+        })
+        .eq('id', currentUser.id);
+
+      if (error) {
+        console.error('Error updating user:', error);
+        if (error.code === '23505') {
+          toast.error('Email já está em uso por outro usuário');
+        } else {
+          toast.error('Erro ao atualizar usuário');
+        }
+        return false;
+      }
       
       // Update user in local state
-      setUsers((prevUsers) =>
-        prevUsers.map((user) => {
+      setUsers(prevUsers =>
+        prevUsers.map(user => {
           if (user.id === currentUser.id) {
-            return { ...currentUser };  // create a new object to ensure state updates
+            return { ...currentUser };
           }
           return user;
         })
@@ -138,34 +224,42 @@ export function useUsersDomain(currentUserRole: UserRole | undefined, currentUse
       toast.success('Usuário atualizado com sucesso');
       return true;
     } catch (error) {
+      console.error('Error in handleEditUser:', error);
       toast.error('Erro ao atualizar usuário');
-      console.error('Error updating user:', error);
       return false;
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleDeleteUser = (currentUser: User | null) => {
+  const handleDeleteUser = async (currentUser: User | null) => {
     if (!currentUser) return false;
     
     setIsSubmitting(true);
     
     try {
-      // Remove user from database (simulated)
-      console.log('Deleting user from database:', currentUser.id);
+      // Delete user from Supabase
+      const { error } = await supabase
+        .from('app_users')
+        .delete()
+        .eq('id', currentUser.id);
+
+      if (error) {
+        console.error('Error deleting user:', error);
+        toast.error('Erro ao remover usuário');
+        return false;
+      }
       
       // Remove user from local state
-      setUsers((prevUsers) =>
-        prevUsers.filter((user) => user.id !== currentUser.id)
+      setUsers(prevUsers =>
+        prevUsers.filter(user => user.id !== currentUser.id)
       );
       
-      // Show success message
       toast.success('Usuário removido com sucesso');
       return true;
     } catch (error) {
+      console.error('Error in handleDeleteUser:', error);
       toast.error('Erro ao remover usuário');
-      console.error('Error deleting user:', error);
       return false;
     } finally {
       setIsSubmitting(false);
@@ -191,7 +285,7 @@ export function useUsersDomain(currentUserRole: UserRole | undefined, currentUse
     // Apply search filter
     if (searchQuery) {
       result = result.filter(
-        (user) =>
+        user =>
           user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
           user.email.toLowerCase().includes(searchQuery.toLowerCase())
       );
@@ -213,6 +307,7 @@ export function useUsersDomain(currentUserRole: UserRole | undefined, currentUse
   return {
     users,
     isSubmitting,
+    isLoading,
     isAdmin,
     isSecretaryAdmin,
     isManager,

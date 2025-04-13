@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import UsersList from '@/components/users/UsersList';
 import UserFilters from '@/components/users/UserFilters';
@@ -36,6 +36,7 @@ const UsersManagement: React.FC = () => {
     filterSecretaryId,
     filterDepartmentId,
     isSubmitting,
+    isLoading,
     isAddDialogOpen,
     setIsAddDialogOpen,
     isEditDialogOpen,
@@ -116,13 +117,20 @@ const UsersManagement: React.FC = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <UsersList
-            users={filteredUsers}
-            openEditDialog={openEditDialog}
-            openDeleteDialog={openDeleteDialog}
-            getRoleName={getRoleName}
-            getRoleBadgeStyle={getRoleBadgeStyle}
-          />
+          {isLoading ? (
+            <div className="flex items-center justify-center p-8">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <span className="ml-2">Carregando usuários...</span>
+            </div>
+          ) : (
+            <UsersList
+              users={filteredUsers}
+              openEditDialog={openEditDialog}
+              openDeleteDialog={openDeleteDialog}
+              getRoleName={getRoleName}
+              getRoleBadgeStyle={getRoleBadgeStyle}
+            />
+          )}
         </CardContent>
       </Card>
 

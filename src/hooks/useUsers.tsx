@@ -10,6 +10,7 @@ export function useUsers(currentUserRole: UserRole | undefined, currentUserSecre
   const {
     users,
     isSubmitting,
+    isLoading: isLoadingUsers,
     isAdmin,
     isSecretaryAdmin,
     isManager,
@@ -29,7 +30,8 @@ export function useUsers(currentUserRole: UserRole | undefined, currentUserSecre
     availableDepartments,
     handleSecretaryChange,
     handleDepartmentChange,
-    updateUserDepartmentInfo
+    updateUserDepartmentInfo,
+    isLoading: isLoadingSecretaries
   } = useSecretaryDepartment(currentUserRole, currentUserSecretaryId, currentUserDepartmentId);
 
   // UI State
@@ -55,6 +57,9 @@ export function useUsers(currentUserRole: UserRole | undefined, currentUserSecre
     getFilteredUsers(searchQuery, filterSecretaryId, filterDepartmentId),
     [searchQuery, filterSecretaryId, filterDepartmentId, users, isAdmin, isSecretaryAdmin, isManager]
   );
+
+  // Loading state
+  const isLoading = isLoadingUsers || isLoadingSecretaries;
 
   // Action handlers
   const handleAddUser = () => {
@@ -151,6 +156,7 @@ export function useUsers(currentUserRole: UserRole | undefined, currentUserSecre
     filterSecretaryId,
     filterDepartmentId,
     isSubmitting,
+    isLoading,
     isAddDialogOpen,
     setIsAddDialogOpen,
     isEditDialogOpen,
