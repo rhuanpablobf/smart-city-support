@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Card,
   CardContent,
@@ -18,20 +18,13 @@ import EditUserDialog from '@/components/users/EditUserDialog';
 import DeleteUserDialog from '@/components/users/DeleteUserDialog';
 import { useUsers } from '@/hooks/useUsers';
 import { 
-  mockSecretaries, 
-  mockDepartments, 
   getRoleName, 
   getRoleBadgeStyle,
-  getAvailableRoles,
   canAddUsers
 } from '@/utils/userManagement';
 
 const UsersManagement: React.FC = () => {
   const { authState } = useAuth();
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-
   const {
     filteredUsers,
     searchQuery,
@@ -43,6 +36,12 @@ const UsersManagement: React.FC = () => {
     filterSecretaryId,
     filterDepartmentId,
     isSubmitting,
+    isAddDialogOpen,
+    setIsAddDialogOpen,
+    isEditDialogOpen,
+    setIsEditDialogOpen, 
+    isDeleteDialogOpen,
+    setIsDeleteDialogOpen,
     handleAddUser,
     handleEditUser,
     handleDeleteUser,
@@ -51,7 +50,10 @@ const UsersManagement: React.FC = () => {
     handleSecretaryChange,
     handleDepartmentChange,
     updateCurrentUserSecretary,
-    updateCurrentUserDepartment
+    updateCurrentUserDepartment,
+    availableSecretaries,
+    availableDepartments,
+    getUserAvailableRoles
   } = useUsers(
     authState.user?.role, 
     authState.user?.secretaryId, 
@@ -61,36 +63,6 @@ const UsersManagement: React.FC = () => {
   const isAdmin = authState.user?.role === 'admin';
   const isSecretaryAdmin = authState.user?.role === 'secretary_admin';
   const isManager = authState.user?.role === 'manager';
-
-  // Get available secretary options based on user role
-  const availableSecretaries = React.useMemo(() => {
-    if (isAdmin) {
-      return mockSecretaries;
-    } else if (isSecretaryAdmin && authState.user?.secretaryId) {
-      return mockSecretaries.filter(s => s.id === authState.user?.secretaryId);
-    }
-    return [];
-  }, [isAdmin, isSecretaryAdmin, authState.user]);
-
-  // Get available department options based on user role and selected secretary
-  const availableDepartments = React.useMemo(() => {
-    if (isAdmin || isSecretaryAdmin) {
-      if (selectedSecretaryId) {
-        return mockDepartments.filter(d => d.secretaryId === selectedSecretaryId);
-      }
-      return isSecretaryAdmin && authState.user?.secretaryId 
-        ? mockDepartments.filter(d => d.secretaryId === authState.user?.secretaryId)
-        : [];
-    } else if (isManager && authState.user?.departmentId) {
-      return mockDepartments.filter(d => d.id === authState.user?.departmentId);
-    }
-    return [];
-  }, [isAdmin, isSecretaryAdmin, isManager, selectedSecretaryId, authState.user]);
-
-  // Get available roles for creating new users
-  const getUserAvailableRoles = () => {
-    return getAvailableRoles(isAdmin, isSecretaryAdmin, isManager);
-  };
 
   // Check if user can add new users
   const userCanAddUsers = canAddUsers(isAdmin, isSecretaryAdmin, isManager);
@@ -128,8 +100,8 @@ const UsersManagement: React.FC = () => {
       {/* Filters Component */}
       <UserFilters
         isAdmin={isAdmin}
-        mockSecretaries={mockSecretaries}
-        mockDepartments={mockDepartments}
+        mockSecretaries={availableSecretaries}
+        mockDepartments={availableDepartments}
         filterSecretaryId={filterSecretaryId}
         filterDepartmentId={filterDepartmentId}
         handleSecretaryChange={handleSecretaryChange}
@@ -168,6 +140,7 @@ const UsersManagement: React.FC = () => {
         selectedSecretaryId={selectedSecretaryId}
         handleSecretaryChange={handleSecretaryChange}
         handleDepartmentChange={handleDepartmentChange}
+        isSubmitting={isSubmitting}
       />
 
       {/* Edit User Dialog */}
@@ -181,7 +154,7 @@ const UsersManagement: React.FC = () => {
         availableSecretaries={availableSecretaries}
         isAdmin={isAdmin}
         isManager={isManager}
-        mockDepartments={mockDepartments}
+        mockDepartments={availableDepartments}
         updateCurrentUserSecretary={updateCurrentUserSecretary}
         updateCurrentUserDepartment={updateCurrentUserDepartment}
         isSubmitting={isSubmitting}
@@ -194,6 +167,7 @@ const UsersManagement: React.FC = () => {
         currentUser={currentUser}
         handleDeleteUser={handleDeleteUser}
         getRoleName={getRoleName}
+        isSubmitting={isSubmitting}
       />
     </div>
   );
