@@ -8,19 +8,22 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { LoadingSpinner } from '../reports/LoadingSpinner';
 
 interface ConversationListProps {
   conversations: Conversation[];
   selectedConversationId?: string;
   onSelectConversation: (conversation: Conversation) => void;
   onStartNewConversation?: () => void;
+  isLoading?: boolean;
 }
 
 const ConversationList: React.FC<ConversationListProps> = ({
   conversations,
   selectedConversationId,
   onSelectConversation,
-  onStartNewConversation
+  onStartNewConversation,
+  isLoading = false
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -77,7 +80,9 @@ const ConversationList: React.FC<ConversationListProps> = ({
       </div>
       
       <div className="flex-1 overflow-y-auto">
-        {filteredConversations.length === 0 ? (
+        {isLoading ? (
+          <LoadingSpinner />
+        ) : filteredConversations.length === 0 ? (
           <div className="p-4 text-center text-gray-500">
             Nenhuma conversa encontrada
           </div>
