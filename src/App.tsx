@@ -7,7 +7,6 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
-import CustomerChat from "./pages/CustomerChat";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import UsersManagement from "./pages/UsersManagement";
@@ -59,7 +58,6 @@ const App = () => (
               <Route path="reports" element={<Reports />} />
               <Route path="settings" element={<Settings />} />
               <Route path="users" element={<UsersManagement />} />
-              <Route path="chat/:conversationId" element={<CustomerChat />} />
             </Route>
             
             <Route path="*" element={<NotFound />} />
