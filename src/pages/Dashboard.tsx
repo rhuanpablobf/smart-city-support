@@ -22,8 +22,13 @@ const Dashboard = () => {
     }
   }, [data]);
   
-  const handleConversationClick = (conversation: Conversation) => {
+  const handleSelectConversation = (conversation: Conversation) => {
     setActiveConversation(conversation);
+  };
+
+  const handleSendMessage = (message: string, conversationId?: string) => {
+    console.log("Sending message:", message, "to conversation:", conversationId || activeConversation?.id);
+    // Here you would typically call an API to send the message
   };
 
   return (
@@ -31,13 +36,17 @@ const Dashboard = () => {
       <div className="w-80 bg-white shadow-md">
         <ConversationList
           conversations={conversations}
-          onConversationClick={handleConversationClick}
+          selectedConversationId={activeConversation?.id}
+          onSelectConversation={handleSelectConversation}
           isLoading={isLoading}
         />
       </div>
       <div className="flex-1 p-4">
         {activeConversation ? (
-          <ChatWindow conversation={activeConversation} />
+          <ChatWindow 
+            conversation={activeConversation}
+            onSendMessage={handleSendMessage}
+          />
         ) : (
           <div className="flex items-center justify-center h-full">
             <p className="text-gray-500">Selecione uma conversa para visualizar.</p>
