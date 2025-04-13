@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import {
   Card,
@@ -566,14 +565,14 @@ const UsersManagement: React.FC = () => {
               <div>
                 <Label htmlFor="filterSecretary">Secretaria</Label>
                 <Select 
-                  value={filterSecretaryId || ''}
-                  onValueChange={(value) => handleSecretaryChange(value, true)}
+                  value={filterSecretaryId || 'all'}
+                  onValueChange={(value) => handleSecretaryChange(value === 'all' ? '' : value, true)}
                 >
                   <SelectTrigger id="filterSecretary">
                     <SelectValue placeholder="Todas as secretarias" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todas as secretarias</SelectItem>
+                    <SelectItem value="all">Todas as secretarias</SelectItem>
                     {mockSecretaries.map(secretary => (
                       <SelectItem key={secretary.id} value={secretary.id}>
                         {secretary.name}
@@ -587,14 +586,14 @@ const UsersManagement: React.FC = () => {
                 <div>
                   <Label htmlFor="filterDepartment">Departamento</Label>
                   <Select 
-                    value={filterDepartmentId || ''}
-                    onValueChange={(value) => handleDepartmentChange(value, true)}
+                    value={filterDepartmentId || 'all'}
+                    onValueChange={(value) => handleDepartmentChange(value === 'all' ? '' : value, true)}
                   >
                     <SelectTrigger id="filterDepartment">
                       <SelectValue placeholder="Todos os departamentos" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Todos os departamentos</SelectItem>
+                      <SelectItem value="all">Todos os departamentos</SelectItem>
                       {mockDepartments
                         .filter(d => d.secretaryId === filterSecretaryId)
                         .map(department => (
