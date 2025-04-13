@@ -13,7 +13,7 @@ interface ChartContainerProps {
   title: string;
   description?: string;
   height?: number;
-  children: ReactNode;
+  children: React.ReactElement; // Changed from ReactNode to ReactElement to match ResponsiveContainer requirements
 }
 
 export const ChartContainer: React.FC<ChartContainerProps> = ({
