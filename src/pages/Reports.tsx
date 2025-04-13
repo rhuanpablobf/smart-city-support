@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   Select,
@@ -13,7 +12,7 @@ import {
   fetchServiceStats, 
   fetchAgentPerformance,
   fetchOverviewStats
-} from '@/services/supabaseService';
+} from '@/services';
 import { useQuery } from '@tanstack/react-query';
 import { KPICards } from '@/components/reports/KPICards';
 import { OverviewTab } from '@/components/reports/OverviewTab';
