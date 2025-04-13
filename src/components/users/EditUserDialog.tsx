@@ -158,9 +158,9 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({
                 type="number"
                 min={1}
                 max={10}
-                value={currentUser.maxConcurrentChats}
+                value={currentUser.maxConcurrentChats || 1}
                 onChange={(e) =>
-                  currentUser && updateCurrentUserDepartment(parseInt(e.target.value))
+                  currentUser && updateCurrentUserDepartment(e.target.value)
                 }
               />
             </div>
