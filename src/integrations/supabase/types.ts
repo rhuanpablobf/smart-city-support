@@ -9,7 +9,166 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      conversations: {
+        Row: {
+          agent_id: string | null
+          department_id: string | null
+          id: string
+          inactivity_warnings: number
+          is_bot: boolean
+          last_message_at: string
+          service_id: string | null
+          started_at: string
+          status: string
+          user_cpf: string | null
+          user_id: string
+          user_name: string
+        }
+        Insert: {
+          agent_id?: string | null
+          department_id?: string | null
+          id?: string
+          inactivity_warnings?: number
+          is_bot?: boolean
+          last_message_at?: string
+          service_id?: string | null
+          started_at?: string
+          status: string
+          user_cpf?: string | null
+          user_id: string
+          user_name: string
+        }
+        Update: {
+          agent_id?: string | null
+          department_id?: string | null
+          id?: string
+          inactivity_warnings?: number
+          is_bot?: boolean
+          last_message_at?: string
+          service_id?: string | null
+          started_at?: string
+          status?: string
+          user_cpf?: string | null
+          user_id?: string
+          user_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      departments: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          file_name: string | null
+          file_url: string | null
+          id: string
+          sender_id: string
+          sender_name: string
+          sender_role: string
+          status: string
+          timestamp: string
+          type: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          file_name?: string | null
+          file_url?: string | null
+          id?: string
+          sender_id: string
+          sender_name: string
+          sender_role: string
+          status: string
+          timestamp?: string
+          type: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          file_name?: string | null
+          file_url?: string | null
+          id?: string
+          sender_id?: string
+          sender_name?: string
+          sender_role?: string
+          status?: string
+          timestamp?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      services: {
+        Row: {
+          created_at: string | null
+          department_id: string
+          description: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          department_id: string
+          description?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          department_id?: string
+          description?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "services_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

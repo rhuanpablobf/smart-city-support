@@ -1,9 +1,10 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { User, MoreVertical, Phone, Video } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Conversation } from '@/types/chat';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ChatHeaderProps {
   conversation?: Conversation;
@@ -15,11 +16,59 @@ interface ChatHeaderProps {
 
 const ChatHeader: React.FC<ChatHeaderProps> = ({ 
   conversation,
-  departmentName,
-  serviceName,
+  departmentName: propDepartmentName,
+  serviceName: propServiceName,
   onBackClick,
   showBackButton = false 
 }) => {
+  const [departmentName, setDepartmentName] = useState<string | undefined>(propDepartmentName);
+  const [serviceName, setServiceName] = useState<string | undefined>(propServiceName);
+
+  useEffect(() => {
+    const fetchDepartmentAndService = async () => {
+      if (!conversation) return;
+      
+      // If we already have the names from props, don't fetch
+      if (propDepartmentName && propServiceName) {
+        setDepartmentName(propDepartmentName);
+        setServiceName(propServiceName);
+        return;
+      }
+
+      try {
+        // Fetch department name
+        if (conversation.department) {
+          const { data: departmentData, error: deptError } = await supabase
+            .from('departments')
+            .select('name')
+            .eq('id', conversation.department)
+            .single();
+            
+          if (!deptError && departmentData) {
+            setDepartmentName(departmentData.name);
+          }
+        }
+        
+        // Fetch service name
+        if (conversation.service) {
+          const { data: serviceData, error: servError } = await supabase
+            .from('services')
+            .select('name')
+            .eq('id', conversation.service)
+            .single();
+            
+          if (!servError && serviceData) {
+            setServiceName(serviceData.name);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching department/service details:', error);
+      }
+    };
+
+    fetchDepartmentAndService();
+  }, [conversation, propDepartmentName, propServiceName]);
+
   return (
     <div className="flex items-center justify-between p-3 bg-chat-header border-b">
       <div className="flex items-center">

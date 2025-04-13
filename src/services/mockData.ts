@@ -1,65 +1,10 @@
 
-import { Conversation, Message, Department, Service, BotFlow, QueueItem } from '@/types/chat';
-import { AgentPerformance, DepartmentStats, ServiceStats, SatisfactionSurvey } from '@/types/reports';
-import { User, UserRole } from '@/types/auth';
+// This file is kept for reference but no longer used
+// Data is now fetched directly from Supabase
 
-// Mock Departments and Services
-export const mockDepartments: Department[] = [
-  {
-    id: 'dept1',
-    name: 'Secretaria de Saúde',
-    services: [
-      {
-        id: 'serv1',
-        departmentId: 'dept1',
-        name: 'Agendamento de Consultas',
-        description: 'Agende consultas médicas na rede municipal de saúde'
-      },
-      {
-        id: 'serv2',
-        departmentId: 'dept1',
-        name: 'Resultados de Exames',
-        description: 'Consulte seus resultados de exames realizados na rede pública'
-      }
-    ]
-  },
-  {
-    id: 'dept2',
-    name: 'Secretaria de Educação',
-    services: [
-      {
-        id: 'serv3',
-        departmentId: 'dept2',
-        name: 'Matrícula Escolar',
-        description: 'Realize matrículas na rede municipal de educação'
-      },
-      {
-        id: 'serv4',
-        departmentId: 'dept2',
-        name: 'Transporte Escolar',
-        description: 'Solicite transporte escolar para estudantes'
-      }
-    ]
-  },
-  {
-    id: 'dept3',
-    name: 'Secretaria de Finanças',
-    services: [
-      {
-        id: 'serv5',
-        departmentId: 'dept3',
-        name: 'IPTU',
-        description: 'Consultas e pagamentos de IPTU'
-      },
-      {
-        id: 'serv6',
-        departmentId: 'dept3',
-        name: 'Certidão Negativa',
-        description: 'Obtenha certidão negativa de débitos municipais'
-      }
-    ]
-  }
-];
+import { BotFlow } from '@/types/chat';
+import { AgentPerformance, DepartmentStats, ServiceStats, SatisfactionSurvey } from '@/types/reports';
+import { User } from '@/types/auth';
 
 // Mock Bot Flow for CPF + Department selection
 export const initialBotFlow: BotFlow = {
@@ -88,10 +33,7 @@ export const initialBotFlow: BotFlow = {
       type: 'options',
       data: {
         text: 'Qual secretaria você deseja contatar?',
-        options: mockDepartments.map(dept => ({
-          label: dept.name,
-          value: dept.id
-        }))
+        options: [] // This will be filled from Supabase data
       },
       position: { x: 0, y: 200 }
     }
@@ -136,110 +78,7 @@ export const mockAgents: User[] = [
   }
 ];
 
-// Mock Conversations
-export const mockConversations: Conversation[] = [
-  {
-    id: 'conv1',
-    userId: 'user1',
-    userCpf: '12345678901',
-    userName: 'Maria Santos',
-    agentId: 'agent1',
-    department: 'dept1',
-    service: 'serv1',
-    status: 'active',
-    startedAt: new Date(Date.now() - 3600000), // 1 hour ago
-    lastMessageAt: new Date(Date.now() - 60000), // 1 minute ago
-    messages: [
-      {
-        id: 'msg1',
-        conversationId: 'conv1',
-        content: 'Olá, preciso agendar uma consulta',
-        type: 'text',
-        senderId: 'user1',
-        senderName: 'Maria Santos',
-        senderRole: 'user',
-        timestamp: new Date(Date.now() - 3600000),
-        status: 'read'
-      },
-      {
-        id: 'msg2',
-        conversationId: 'conv1',
-        content: 'Olá Maria, como posso ajudar com o agendamento?',
-        type: 'text',
-        senderId: 'agent1',
-        senderName: 'Carlos Silva',
-        senderRole: 'agent',
-        timestamp: new Date(Date.now() - 3500000),
-        status: 'read'
-      }
-    ],
-    inactivityWarnings: 0,
-    isBot: false
-  },
-  {
-    id: 'conv2',
-    userId: 'user2',
-    userCpf: '98765432101',
-    userName: 'João Pereira',
-    department: 'dept2',
-    service: 'serv3',
-    status: 'waiting',
-    startedAt: new Date(Date.now() - 1800000), // 30 minutes ago
-    lastMessageAt: new Date(Date.now() - 300000), // 5 minutes ago
-    messages: [
-      {
-        id: 'msg3',
-        conversationId: 'conv2',
-        content: 'Preciso fazer matrícula para meu filho',
-        type: 'text',
-        senderId: 'user2',
-        senderName: 'João Pereira',
-        senderRole: 'user',
-        timestamp: new Date(Date.now() - 1800000),
-        status: 'read'
-      },
-      {
-        id: 'msg4',
-        conversationId: 'conv2',
-        content: 'Por favor informe a idade dele e a escola desejada',
-        type: 'text',
-        senderId: 'system',
-        senderName: 'Assistente Virtual',
-        senderRole: 'system',
-        timestamp: new Date(Date.now() - 1750000),
-        status: 'read'
-      }
-    ],
-    inactivityWarnings: 1,
-    isBot: true
-  }
-];
-
-// Mock Queue
-export const mockQueue: QueueItem[] = [
-  {
-    conversationId: 'conv2',
-    userId: 'user2',
-    userName: 'João Pereira',
-    departmentId: 'dept2',
-    serviceId: 'serv3',
-    waitingSince: new Date(Date.now() - 300000), // 5 minutes ago
-    position: 1,
-    estimatedWaitTime: 180 // 3 minutes
-  },
-  {
-    conversationId: 'conv3',
-    userId: 'user3',
-    userName: 'Fernanda Lima',
-    departmentId: 'dept3',
-    serviceId: 'serv5',
-    waitingSince: new Date(Date.now() - 240000), // 4 minutes ago
-    position: 2,
-    estimatedWaitTime: 360 // 6 minutes
-  }
-];
-
-// Mock Reports Data
+// Mock Reports Data - These would also be fetched from Supabase in a real app
 export const mockAgentPerformance: AgentPerformance[] = [
   {
     agentId: 'agent1',

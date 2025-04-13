@@ -3,263 +3,167 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import ChatWindow from '@/components/chat/ChatWindow';
 import ConversationList from '@/components/chat/ConversationList';
-import { Conversation, Message } from '@/types/chat';
-import { mockConversations } from '@/services/mockData';
-import { v4 as uuidv4 } from 'uuid';
+import { Conversation } from '@/types/chat';
 import { toast } from 'sonner';
+import { 
+  fetchConversations, 
+  sendMessage, 
+  subscribeToMessages, 
+  subscribeToConversations,
+  updateMessageStatus 
+} from '@/services/supabaseService';
+import { useQuery } from '@tanstack/react-query';
 
 const Dashboard: React.FC = () => {
   const { authState } = useAuth();
-  const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | undefined>(undefined);
-  const [loading, setLoading] = useState(true);
+  
+  // Fetch conversations with React Query
+  const { data: conversations = [], isLoading, error, refetch } = useQuery({
+    queryKey: ['conversations'],
+    queryFn: fetchConversations,
+  });
+
+  // Local state to manage conversations with real-time updates
+  const [localConversations, setLocalConversations] = useState<Conversation[]>([]);
 
   useEffect(() => {
-    // Simulate loading conversations from API
-    const loadConversations = async () => {
-      try {
-        setLoading(true);
-        // Wait for simulated API delay
-        await new Promise(resolve => setTimeout(resolve, 800));
+    if (conversations.length > 0) {
+      setLocalConversations(conversations);
+    }
+  }, [conversations]);
+
+  useEffect(() => {
+    // Subscribe to conversation updates
+    const unsubscribeFromConversations = subscribeToConversations((updatedConversation) => {
+      setLocalConversations(prevConversations => {
+        // Check if this is an update to an existing conversation
+        const existingIndex = prevConversations.findIndex(c => c.id === updatedConversation.id);
         
-        // In a real app, we'd fetch conversations for the current user
-        setConversations(mockConversations);
-      } catch (error) {
-        console.error('Error loading conversations:', error);
-        toast.error('Erro ao carregar conversas');
-      } finally {
-        setLoading(false);
+        if (existingIndex >= 0) {
+          // Update existing conversation
+          const updatedConversations = [...prevConversations];
+          updatedConversations[existingIndex] = {
+            ...updatedConversations[existingIndex],
+            ...updatedConversation,
+          };
+          return updatedConversations;
+        } else if ('userName' in updatedConversation) { 
+          // This is a complete new conversation
+          return [...prevConversations, updatedConversation as Conversation];
+        }
+        
+        return prevConversations;
+      });
+    });
+
+    // Subscribe to message updates for the selected conversation
+    let unsubscribeFromMessages: (() => void) | undefined;
+    
+    if (selectedConversation) {
+      unsubscribeFromMessages = subscribeToMessages(
+        selectedConversation.id,
+        (newMessage) => {
+          // Update both local conversations and selected conversation
+          setLocalConversations(prevConversations => {
+            return prevConversations.map(conv => {
+              if (conv.id === newMessage.conversationId) {
+                return {
+                  ...conv,
+                  lastMessageAt: newMessage.timestamp,
+                  messages: [...conv.messages, newMessage]
+                };
+              }
+              return conv;
+            });
+          });
+          
+          setSelectedConversation(prevConv => {
+            if (prevConv?.id === newMessage.conversationId) {
+              return {
+                ...prevConv,
+                lastMessageAt: newMessage.timestamp,
+                messages: [...prevConv.messages, newMessage]
+              };
+            }
+            return prevConv;
+          });
+          
+          // If this message was from someone else to the current user, update status to read
+          if (selectedConversation && 
+              newMessage.conversationId === selectedConversation.id && 
+              newMessage.senderId !== authState.user?.id) {
+            updateMessageStatus(newMessage.id, 'read').catch(error => {
+              console.error('Error updating message status:', error);
+            });
+          }
+        }
+      );
+    }
+
+    // Clean up subscriptions
+    return () => {
+      unsubscribeFromConversations();
+      if (unsubscribeFromMessages) {
+        unsubscribeFromMessages();
       }
     };
-    
-    loadConversations();
-  }, []);
+  }, [selectedConversation]);
+
+  useEffect(() => {
+    if (error) {
+      toast.error('Erro ao carregar conversas');
+      console.error('Error loading conversations:', error);
+    }
+  }, [error]);
 
   const handleSelectConversation = (conversation: Conversation) => {
     setSelectedConversation(conversation);
-  };
-
-  const handleSendMessage = (content: string, conversationId?: string) => {
-    if (!content.trim() || !conversationId) return;
     
-    const timestamp = new Date();
-    const currentUser = authState.user;
-    
-    if (!currentUser) return;
-
-    // Create new message
-    const newMessage: Message = {
-      id: uuidv4(),
-      conversationId,
-      content,
-      type: 'text',
-      senderId: currentUser.id,
-      senderName: currentUser.name,
-      senderRole: currentUser.role,
-      timestamp,
-      status: 'sent'
-    };
-    
-    // Update conversations with new message
-    setConversations(prevConversations => {
-      return prevConversations.map(conv => {
-        if (conv.id === conversationId) {
-          return {
-            ...conv,
-            messages: [...conv.messages, newMessage],
-            lastMessageAt: timestamp
-          };
-        }
-        return conv;
-      });
-    });
-    
-    // Also update selected conversation if it's the current one
-    if (selectedConversation?.id === conversationId) {
-      setSelectedConversation(prev => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          messages: [...prev.messages, newMessage],
-          lastMessageAt: timestamp
-        };
-      });
-    }
-    
-    // Simulate message status updates (delivered -> read)
-    setTimeout(() => {
-      setConversations(prevConversations => {
-        return prevConversations.map(conv => {
-          if (conv.id === conversationId) {
-            return {
-              ...conv,
-              messages: conv.messages.map(msg => {
-                if (msg.id === newMessage.id) {
-                  return { ...msg, status: 'delivered' };
-                }
-                return msg;
-              })
-            };
-          }
-          return conv;
-        });
-      });
-      
-      // Also update selected conversation
-      if (selectedConversation?.id === conversationId) {
-        setSelectedConversation(prev => {
-          if (!prev) return prev;
-          return {
-            ...prev,
-            messages: prev.messages.map(msg => {
-              if (msg.id === newMessage.id) {
-                return { ...msg, status: 'delivered' };
-              }
-              return msg;
-            })
-          };
-        });
-      }
-    }, 1000);
-    
-    setTimeout(() => {
-      setConversations(prevConversations => {
-        return prevConversations.map(conv => {
-          if (conv.id === conversationId) {
-            return {
-              ...conv,
-              messages: conv.messages.map(msg => {
-                if (msg.id === newMessage.id) {
-                  return { ...msg, status: 'read' };
-                }
-                return msg;
-              })
-            };
-          }
-          return conv;
-        });
-      });
-      
-      // Also update selected conversation
-      if (selectedConversation?.id === conversationId) {
-        setSelectedConversation(prev => {
-          if (!prev) return prev;
-          return {
-            ...prev,
-            messages: prev.messages.map(msg => {
-              if (msg.id === newMessage.id) {
-                return { ...msg, status: 'read' };
-              }
-              return msg;
-            })
-          };
-        });
-      }
-    }, 2000);
-    
-    // Simulate bot or customer response in 1-3 seconds
-    if (Math.random() > 0.3) {
-      const responseDelay = Math.floor(Math.random() * 2000) + 1000;
-      setTimeout(() => {
-        const responses = [
-          "Entendi, obrigado pela informação.",
-          "Poderia me dar mais detalhes, por favor?",
-          "Estou verificando isso para você.",
-          "Vou encaminhar sua solicitação ao setor responsável.",
-          "Isso deve ser resolvido em breve."
-        ];
-        
-        const responseContent = responses[Math.floor(Math.random() * responses.length)];
-        
-        const responseMessage: Message = {
-          id: uuidv4(),
-          conversationId,
-          content: responseContent,
-          type: 'text',
-          senderId: `user${Math.floor(Math.random() * 5) + 1}`,
-          senderName: selectedConversation?.userName || 'Cliente',
-          senderRole: 'user',
-          timestamp: new Date(),
-          status: 'read'
-        };
-        
-        setConversations(prevConversations => {
-          return prevConversations.map(conv => {
-            if (conv.id === conversationId) {
-              return {
-                ...conv,
-                messages: [...conv.messages, responseMessage],
-                lastMessageAt: new Date()
-              };
-            }
-            return conv;
-          });
-        });
-        
-        if (selectedConversation?.id === conversationId) {
-          setSelectedConversation(prev => {
-            if (!prev) return prev;
-            return {
-              ...prev,
-              messages: [...prev.messages, responseMessage],
-              lastMessageAt: new Date()
-            };
+    // Mark messages as read when selecting a conversation
+    if (conversation.messages.length > 0 && authState.user) {
+      conversation.messages.forEach(message => {
+        if (message.senderId !== authState.user?.id && message.status !== 'read') {
+          updateMessageStatus(message.id, 'read').catch(error => {
+            console.error('Error updating message status:', error);
           });
         }
-      }, responseDelay);
+      });
     }
   };
 
-  const handleSendFile = (file: File, conversationId?: string) => {
-    if (!conversationId) return;
+  const handleSendMessage = async (content: string, conversationId?: string) => {
+    if (!content.trim() || !conversationId || !authState.user) return;
     
-    const timestamp = new Date();
-    const currentUser = authState.user;
-    
-    if (!currentUser) return;
+    try {
+      await sendMessage(content, conversationId, authState.user);
+      
+      // No need to update local state, the subscription will handle it
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast.error('Erro ao enviar mensagem');
+    }
+  };
 
-    // In a real app, we'd upload the file to a storage service
-    // and then send a message with the file URL
-    toast.success(`Arquivo "${file.name}" enviado`);
+  const handleSendFile = async (file: File, conversationId?: string) => {
+    if (!conversationId || !authState.user) return;
     
-    // Create new file message
-    const newMessage: Message = {
-      id: uuidv4(),
-      conversationId,
-      content: `Arquivo: ${file.name}`,
-      type: 'file',
-      senderId: currentUser.id,
-      senderName: currentUser.name,
-      senderRole: currentUser.role,
-      timestamp,
-      status: 'sent',
-      fileName: file.name,
-      fileUrl: '#'
-    };
-    
-    // Update conversations with new message
-    setConversations(prevConversations => {
-      return prevConversations.map(conv => {
-        if (conv.id === conversationId) {
-          return {
-            ...conv,
-            messages: [...conv.messages, newMessage],
-            lastMessageAt: timestamp
-          };
-        }
-        return conv;
-      });
-    });
-    
-    if (selectedConversation?.id === conversationId) {
-      setSelectedConversation(prev => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          messages: [...prev.messages, newMessage],
-          lastMessageAt: timestamp
-        };
-      });
+    try {
+      // In a real app, we'd upload the file to a storage service first
+      toast.success(`Arquivo "${file.name}" enviado`);
+      
+      // For now, we'll just send a message with the file info
+      await sendMessage(
+        `Arquivo: ${file.name}`, 
+        conversationId, 
+        authState.user, 
+        'file',
+        '#', // Placeholder URL
+        file.name
+      );
+    } catch (error) {
+      console.error('Error sending file:', error);
+      toast.error('Erro ao enviar arquivo');
     }
   };
 
@@ -272,7 +176,7 @@ const Dashboard: React.FC = () => {
       <div className="flex flex-1 overflow-hidden">
         <div className="hidden md:block md:w-80 lg:w-96 flex-shrink-0">
           <ConversationList
-            conversations={conversations}
+            conversations={localConversations}
             selectedConversationId={selectedConversation?.id}
             onSelectConversation={handleSelectConversation}
           />
@@ -285,14 +189,14 @@ const Dashboard: React.FC = () => {
             onSendMessage={handleSendMessage}
             onSendFile={handleSendFile}
             onBackClick={handleBackClick}
-            loading={loading}
+            loading={isLoading}
             showBackButton={true}
           />
         </div>
         
         <div className={`flex-1 md:hidden ${selectedConversation ? 'hidden' : 'block'}`}>
           <ConversationList
-            conversations={conversations}
+            conversations={localConversations}
             selectedConversationId={selectedConversation?.id}
             onSelectConversation={handleSelectConversation}
           />
