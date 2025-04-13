@@ -1,6 +1,8 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, UserRole, AuthState } from '@/types/auth';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AuthContextType {
   authState: AuthState;
@@ -11,35 +13,63 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock users for demo
+// Mock users for demo with hierarchical structure
 const MOCK_USERS = [
   {
     id: '1',
-    name: 'Admin User',
+    name: 'Admin Master',
     email: 'admin@example.com',
     role: 'admin' as UserRole,
     avatar: '/placeholder.svg',
-    isOnline: true,
+    isOnline: false,
+    status: 'offline' as const,
     maxConcurrentChats: 999,
+    secretaryId: null,
+    secretaryName: null,
+    departmentId: null,
+    departmentName: null,
   },
   {
     id: '2',
-    name: 'Manager User',
-    email: 'manager@example.com',
-    role: 'manager' as UserRole,
+    name: 'Admin Secretaria Saúde',
+    email: 'saude.admin@example.com',
+    role: 'secretary_admin' as UserRole,
     avatar: '/placeholder.svg',
     isOnline: true,
+    status: 'online' as const,
     maxConcurrentChats: 10,
+    secretaryId: 'sec1',
+    secretaryName: 'Secretaria de Saúde',
+    departmentId: null,
+    departmentName: null,
   },
   {
     id: '3',
-    name: 'Agent User',
+    name: 'Gerente Consultas',
+    email: 'consultas.gerente@example.com',
+    role: 'manager' as UserRole,
+    avatar: '/placeholder.svg',
+    isOnline: true,
+    status: 'online' as const,
+    maxConcurrentChats: 7,
+    secretaryId: 'sec1',
+    secretaryName: 'Secretaria de Saúde',
+    departmentId: 'dep1',
+    departmentName: 'Departamento de Consultas',
+  },
+  {
+    id: '4',
+    name: 'Atendente Consultas',
     email: 'agent@example.com',
     role: 'agent' as UserRole,
     avatar: '/placeholder.svg',
     isOnline: true,
     status: 'online' as const,
     maxConcurrentChats: 5,
+    secretaryId: 'sec1',
+    secretaryName: 'Secretaria de Saúde',
+    departmentId: 'dep1',
+    departmentName: 'Departamento de Consultas',
   },
 ];
 
@@ -93,15 +123,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error('Invalid credentials');
       }
       
+      // Set default status based on role - admin always logs in as offline
+      let initialStatus = user.role === 'admin' ? 'offline' : 'online';
+      let initialIsOnline = user.role !== 'admin';
+      
+      const updatedUser = {
+        ...user,
+        status: initialStatus as 'online' | 'offline' | 'break',
+        isOnline: initialIsOnline
+      };
+      
       // Store user in localStorage
-      localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('user', JSON.stringify(updatedUser));
       
       // Update auth state
       setAuthState({
-        user,
+        user: updatedUser,
         isAuthenticated: true,
         isLoading: false,
       });
+
+      // Show toast notification about login status
+      if (user.role === 'admin') {
+        toast.info('Administrador Master logado com status offline por padrão');
+      } else {
+        toast.success('Login efetuado com sucesso - Status online');
+      }
       
       return true;
     } catch (error) {
