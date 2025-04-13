@@ -51,3 +51,32 @@ export interface SatisfactionSurvey {
   botOnly: boolean;
   timestamp: Date;
 }
+
+export interface OverviewStats {
+  attendanceData: {
+    name: string;
+    total: number;
+    bot: number;
+    human: number;
+  }[];
+  responseTimeData: {
+    name: string;
+    avg: number;
+  }[];
+  satisfactionData: {
+    name: string;
+    value: number;
+  }[];
+  resolutionData: {
+    name: string;
+    value: number;
+  }[];
+  kpiData: {
+    total_attendances: number;
+    total_growth: string;
+    response_time: string;
+    response_time_change: string;
+    satisfaction: number;
+    satisfaction_change: string;
+  };
+}

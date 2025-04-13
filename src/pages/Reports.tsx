@@ -11,7 +11,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   fetchDepartmentStats, 
   fetchServiceStats, 
-  fetchAgentPerformance 
+  fetchAgentPerformance,
+  fetchOverviewStats
 } from '@/services/supabaseService';
 import { useQuery } from '@tanstack/react-query';
 import { KPICards } from '@/components/reports/KPICards';
@@ -37,6 +38,13 @@ const Reports: React.FC = () => {
     queryKey: ['agentPerformance', period],
     queryFn: fetchAgentPerformance
   });
+
+  const { data: overviewStats, isLoading: loadingOverview } = useQuery({
+    queryKey: ['overviewStats', period],
+    queryFn: fetchOverviewStats
+  });
+
+  const isLoading = loadingDepartments || loadingServices || loadingAgents || loadingOverview;
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -64,7 +72,12 @@ const Reports: React.FC = () => {
         </div>
       </div>
 
-      <KPICards />
+      {overviewStats && (
+        <KPICards 
+          kpiData={overviewStats.kpiData} 
+          isLoading={loadingOverview} 
+        />
+      )}
 
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList>
@@ -74,7 +87,15 @@ const Reports: React.FC = () => {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
-          <OverviewTab />
+          {overviewStats && (
+            <OverviewTab
+              attendanceData={overviewStats.attendanceData}
+              responseTimeData={overviewStats.responseTimeData}
+              satisfactionData={overviewStats.satisfactionData}
+              resolutionData={overviewStats.resolutionData}
+              isLoading={loadingOverview}
+            />
+          )}
         </TabsContent>
 
         <TabsContent value="departments" className="space-y-4">
