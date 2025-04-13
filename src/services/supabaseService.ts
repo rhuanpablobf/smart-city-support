@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { Department, Service, Conversation, Message } from "@/types/chat";
+import { Department, Service, Conversation, Message, MessageType } from "@/types/chat";
 import { v4 as uuidv4 } from 'uuid';
 import { User } from "@/types/auth";
 
@@ -24,7 +24,19 @@ export const fetchDepartments = async (): Promise<Department[]> => {
     throw error;
   }
 
-  return data as Department[];
+  // Transform the data to match our Department and Service types
+  const departments: Department[] = data.map((dept: any) => ({
+    id: dept.id,
+    name: dept.name,
+    services: dept.services.map((serv: any) => ({
+      id: serv.id,
+      departmentId: serv.department_id,
+      name: serv.name,
+      description: serv.description
+    }))
+  }));
+
+  return departments;
 };
 
 // Conversations
@@ -83,7 +95,7 @@ export const fetchConversations = async (): Promise<Conversation[]> => {
         id: msg.id,
         conversationId: msg.conversation_id,
         content: msg.content,
-        type: msg.type as 'text' | 'file' | 'system',
+        type: msg.type as MessageType,
         senderId: msg.sender_id,
         senderName: msg.sender_name,
         senderRole: msg.sender_role,
@@ -107,7 +119,7 @@ export const sendMessage = async (
   content: string, 
   conversationId: string, 
   currentUser: User | null,
-  type: 'text' | 'file' | 'system' = 'text',
+  type: MessageType = 'text',
   fileUrl?: string,
   fileName?: string
 ): Promise<Message> => {
@@ -151,12 +163,12 @@ export const sendMessage = async (
     id: data.id,
     conversationId: data.conversation_id,
     content: data.content,
-    type: data.type,
+    type: data.type as MessageType,
     senderId: data.sender_id,
     senderName: data.sender_name,
     senderRole: data.sender_role,
     timestamp: new Date(data.timestamp),
-    status: data.status,
+    status: data.status as 'sent' | 'delivered' | 'read',
     fileUrl: data.file_url || undefined,
     fileName: data.file_name || undefined
   };
@@ -252,12 +264,12 @@ export const subscribeToMessages = (
           id: newMsg.id,
           conversationId: newMsg.conversation_id,
           content: newMsg.content,
-          type: newMsg.type,
+          type: newMsg.type as MessageType,
           senderId: newMsg.sender_id,
           senderName: newMsg.sender_name,
           senderRole: newMsg.sender_role,
           timestamp: new Date(newMsg.timestamp),
-          status: newMsg.status,
+          status: newMsg.status as 'sent' | 'delivered' | 'read',
           fileUrl: newMsg.file_url || undefined,
           fileName: newMsg.file_name || undefined
         });
@@ -325,12 +337,12 @@ export const subscribeToConversations = (
             id: msg.id,
             conversationId: msg.conversation_id,
             content: msg.content,
-            type: msg.type,
+            type: msg.type as MessageType,
             senderId: msg.sender_id,
             senderName: msg.sender_name,
             senderRole: msg.sender_role,
             timestamp: new Date(msg.timestamp),
-            status: msg.status,
+            status: msg.status as 'sent' | 'delivered' | 'read',
             fileUrl: msg.file_url || undefined,
             fileName: msg.file_name || undefined
           })),

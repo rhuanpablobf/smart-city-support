@@ -4,7 +4,7 @@
 
 import { BotFlow } from '@/types/chat';
 import { AgentPerformance, DepartmentStats, ServiceStats, SatisfactionSurvey } from '@/types/reports';
-import { User } from '@/types/auth';
+import { User, UserRole } from '@/types/auth';
 
 // Mock Bot Flow for CPF + Department selection
 export const initialBotFlow: BotFlow = {
@@ -50,7 +50,7 @@ export const mockAgents: User[] = [
     id: 'agent1',
     name: 'Carlos Silva',
     email: 'carlos@example.com',
-    role: 'agent' as UserRole,
+    role: 'agent',
     avatar: '/placeholder.svg',
     isOnline: true,
     status: 'online',
@@ -60,7 +60,7 @@ export const mockAgents: User[] = [
     id: 'agent2',
     name: 'Ana Paula',
     email: 'ana@example.com',
-    role: 'agent' as UserRole,
+    role: 'agent',
     avatar: '/placeholder.svg',
     isOnline: true,
     status: 'online',
@@ -70,7 +70,7 @@ export const mockAgents: User[] = [
     id: 'agent3',
     name: 'Roberto Gomes',
     email: 'roberto@example.com',
-    role: 'agent' as UserRole,
+    role: 'agent',
     avatar: '/placeholder.svg',
     isOnline: false,
     status: 'offline',
@@ -100,6 +100,7 @@ export const mockAgentPerformance: AgentPerformance[] = [
   }
 ];
 
+// Define mock department stats for use in reports
 export const mockDepartmentStats: DepartmentStats[] = [
   {
     departmentId: 'dept1',

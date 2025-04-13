@@ -6,7 +6,6 @@ import ChatHeader from './ChatHeader';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Conversation, Message } from '@/types/chat';
 import { User } from '@/types/auth';
-import { mockDepartments } from '@/services/mockData';
 import { AlertCircle } from 'lucide-react';
 
 interface ChatWindowProps {
@@ -29,15 +28,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   showBackButton = false
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  // Get department and service names
-  const department = conversation?.department 
-    ? mockDepartments.find(d => d.id === conversation.department) 
-    : undefined;
-  
-  const service = department?.services.find(
-    s => s.id === conversation?.service
-  );
 
   useEffect(() => {
     scrollToBottom();
@@ -65,8 +55,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     <div className="flex flex-col h-full">
       <ChatHeader 
         conversation={conversation}
-        departmentName={department?.name}
-        serviceName={service?.name}
         onBackClick={onBackClick}
         showBackButton={showBackButton}
       />
