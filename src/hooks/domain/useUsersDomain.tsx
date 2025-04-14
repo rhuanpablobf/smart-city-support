@@ -23,8 +23,8 @@ export function useUsersDomain(
     const fetchUsers = async () => {
       try {
         setIsLoading(true);
-        const { data, error } = await supabase
-          .from('app_users')
+        const { data, error } = await (supabase
+          .from('app_users') as any)
           .select('*');
 
         if (error) {
@@ -98,8 +98,8 @@ export function useUsersDomain(
       const isOfflineByDefault = newUser.role === 'admin';
       
       // Inserir usuário no Supabase
-      const { data, error } = await supabase
-        .from('app_users')
+      const { data, error } = await (supabase
+        .from('app_users') as any)
         .insert({
           name: newUser.name,
           email: newUser.email,
@@ -185,8 +185,8 @@ export function useUsersDomain(
       }
       
       // Update user in Supabase
-      const { error } = await supabase
-        .from('app_users')
+      const { error } = await (supabase
+        .from('app_users') as any)
         .update({
           name: currentUser.name,
           email: currentUser.email,
@@ -239,8 +239,8 @@ export function useUsersDomain(
     
     try {
       // Delete user from Supabase
-      const { error } = await supabase
-        .from('app_users')
+      const { error } = await (supabase
+        .from('app_users') as any)
         .delete()
         .eq('id', currentUser.id);
 

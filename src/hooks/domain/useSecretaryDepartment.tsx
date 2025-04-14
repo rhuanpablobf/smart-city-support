@@ -38,9 +38,9 @@ export function useSecretaryDepartment(
       try {
         setIsLoading(true);
         
-        // Fetch secretaries
-        const { data: secretariesData, error: secretariesError } = await supabase
-          .from('secretaries')
+        // Fetch secretaries - usando type assertion para evitar erro de tipagem
+        const { data: secretariesData, error: secretariesError } = await (supabase
+          .from('secretaries') as any)
           .select('*')
           .order('name');
         
