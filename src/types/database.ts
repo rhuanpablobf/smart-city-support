@@ -1,5 +1,6 @@
 
 import { Database as SupabaseDatabase } from '@/integrations/supabase/types';
+import { SupabaseClient } from '@supabase/supabase-js';
 
 // Extend the Supabase types with our custom tables
 export interface CustomDatabase extends SupabaseDatabase {
@@ -97,8 +98,4 @@ export interface CustomDatabase extends SupabaseDatabase {
 }
 
 // Type for the custom Supabase client
-export type CustomSupabaseClient = {
-  from<T extends keyof CustomDatabase['public']['Tables']>(
-    table: T
-  ): any;
-} & Omit<typeof import('@/services/base/supabaseBase')['supabase'], 'from'>;
+export type CustomSupabaseClient = SupabaseClient<CustomDatabase>;
