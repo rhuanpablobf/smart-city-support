@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { User, UserRole } from '@/types/auth';
 import { toast } from 'sonner';
@@ -23,8 +22,8 @@ export function useUsersDomain(
     const fetchUsers = async () => {
       try {
         setIsLoading(true);
-        const { data, error } = await (supabase
-          .from('app_users') as any)
+        const { data, error } = await supabase
+          .from('app_users')
           .select('*');
 
         if (error) {
@@ -34,7 +33,7 @@ export function useUsersDomain(
         }
 
         // Map Supabase data to our User type
-        const mappedUsers: User[] = data.map((user: any) => ({
+        const mappedUsers: User[] = data.map((user) => ({
           id: user.id,
           name: user.name,
           email: user.email,
@@ -98,8 +97,8 @@ export function useUsersDomain(
       const isOfflineByDefault = newUser.role === 'admin';
       
       // Inserir usuário no Supabase
-      const { data, error } = await (supabase
-        .from('app_users') as any)
+      const { data, error } = await supabase
+        .from('app_users')
         .insert({
           name: newUser.name,
           email: newUser.email,
@@ -185,8 +184,8 @@ export function useUsersDomain(
       }
       
       // Update user in Supabase
-      const { error } = await (supabase
-        .from('app_users') as any)
+      const { error } = await supabase
+        .from('app_users')
         .update({
           name: currentUser.name,
           email: currentUser.email,
@@ -239,8 +238,8 @@ export function useUsersDomain(
     
     try {
       // Delete user from Supabase
-      const { error } = await (supabase
-        .from('app_users') as any)
+      const { error } = await supabase
+        .from('app_users')
         .delete()
         .eq('id', currentUser.id);
 

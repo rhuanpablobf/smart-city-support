@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from 'react';
 import { UserRole, User } from '@/types/auth';
 import { supabase } from '@/services/base/supabaseBase';
@@ -38,9 +37,9 @@ export function useSecretaryDepartment(
       try {
         setIsLoading(true);
         
-        // Fetch secretaries - usando type assertion para evitar erro de tipagem
-        const { data: secretariesData, error: secretariesError } = await (supabase
-          .from('secretaries') as any)
+        // Fetch secretaries with proper typing
+        const { data: secretariesData, error: secretariesError } = await supabase
+          .from('secretaries')
           .select('*')
           .order('name');
         
@@ -51,7 +50,7 @@ export function useSecretaryDepartment(
         }
         
         // Map secretaries data
-        const mappedSecretaries = secretariesData.map((secretary: any) => ({
+        const mappedSecretaries = secretariesData.map((secretary) => ({
           id: secretary.id,
           name: secretary.name
         }));
@@ -71,7 +70,7 @@ export function useSecretaryDepartment(
         }
         
         // Map departments data
-        const mappedDepartments = departmentsData.map((department: any) => ({
+        const mappedDepartments = departmentsData.map((department) => ({
           id: department.id,
           name: department.name,
           secretaryId: department.secretary_id
@@ -158,7 +157,7 @@ export function useSecretaryDepartment(
     
     return updatedUser;
   };
-
+  
   return {
     selectedSecretaryId,
     setSelectedSecretaryId,
