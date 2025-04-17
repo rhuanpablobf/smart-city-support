@@ -8,7 +8,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Loader2, ChevronRight, AlertCircle } from 'lucide-react';
+import { Plus, Loader2, ChevronRight, AlertCircle, RefreshCw } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { SecretaryWithDepartments, fetchSecretariesWithDepartments } from '@/services/unitsService';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -72,7 +72,13 @@ const UnitsManagement: React.FC = () => {
           </p>
         </div>
 
-        <div className="mt-4 md:mt-0">
+        <div className="mt-4 md:mt-0 flex flex-wrap gap-2">
+          {loadError && (
+            <Button variant="outline" onClick={loadData} className="mr-2">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Tentar novamente
+            </Button>
+          )}
           <Button onClick={() => setIsAddSecretaryOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
             Nova Secretaria
@@ -103,78 +109,78 @@ const UnitsManagement: React.FC = () => {
             </div>
           ) : (
             <Accordion type="multiple" className="w-full">
-              {secretariesData.map((secretary) => (
-                <AccordionItem key={secretary.id} value={secretary.id}>
-                  <AccordionTrigger className="hover:bg-gray-50 px-4 rounded-md">
-                    <div className="flex items-center justify-between w-full pr-4">
-                      <div className="font-medium">{secretary.name}</div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleAddDepartment(secretary.id);
-                        }}
-                      >
-                        <Plus className="h-3 w-3 mr-1" />
-                        Adicionar Unidade
-                      </Button>
-                    </div>
-                  </AccordionTrigger>
-                  
-                  <AccordionContent>
-                    <div className="pl-6 border-l-2 border-gray-200 ml-4 mt-2">
-                      {secretary.departments.length === 0 ? (
-                        <p className="text-gray-500 py-2">Nenhuma unidade cadastrada</p>
-                      ) : (
-                        <Accordion type="multiple" className="w-full">
-                          {secretary.departments.map((department) => (
-                            <AccordionItem key={department.id} value={department.id}>
-                              <AccordionTrigger className="hover:bg-gray-50 px-4 rounded-md">
-                                <div className="flex items-center justify-between w-full pr-4">
-                                  <div className="font-medium">{department.name}</div>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleAddService(department.id);
-                                    }}
-                                  >
-                                    <Plus className="h-3 w-3 mr-1" />
-                                    Adicionar Serviço
-                                  </Button>
-                                </div>
-                              </AccordionTrigger>
-                              
-                              <AccordionContent>
-                                <div className="pl-6 border-l-2 border-gray-200 ml-4 mt-2">
-                                  {department.services.length === 0 ? (
-                                    <p className="text-gray-500 py-2">Nenhum serviço cadastrado</p>
-                                  ) : (
-                                    <ul className="space-y-2">
-                                      {department.services.map((service) => (
-                                        <li key={service.id} className="p-2 hover:bg-gray-50 rounded-md flex items-center justify-between">
-                                          <span>{service.name}</span>
-                                          <Button variant="ghost" size="sm">
-                                            <ChevronRight className="h-4 w-4" />
-                                          </Button>
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  )}
-                                </div>
-                              </AccordionContent>
-                            </AccordionItem>
-                          ))}
-                        </Accordion>
-                      )}
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-
-              {secretariesData.length === 0 && (
+              {secretariesData.length > 0 ? (
+                secretariesData.map((secretary) => (
+                  <AccordionItem key={secretary.id} value={secretary.id}>
+                    <AccordionTrigger className="hover:bg-gray-50 px-4 rounded-md">
+                      <div className="flex items-center justify-between w-full pr-4">
+                        <div className="font-medium">{secretary.name}</div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAddDepartment(secretary.id);
+                          }}
+                        >
+                          <Plus className="h-3 w-3 mr-1" />
+                          Adicionar Unidade
+                        </Button>
+                      </div>
+                    </AccordionTrigger>
+                    
+                    <AccordionContent>
+                      <div className="pl-6 border-l-2 border-gray-200 ml-4 mt-2">
+                        {secretary.departments.length === 0 ? (
+                          <p className="text-gray-500 py-2">Nenhuma unidade cadastrada</p>
+                        ) : (
+                          <Accordion type="multiple" className="w-full">
+                            {secretary.departments.map((department) => (
+                              <AccordionItem key={department.id} value={department.id}>
+                                <AccordionTrigger className="hover:bg-gray-50 px-4 rounded-md">
+                                  <div className="flex items-center justify-between w-full pr-4">
+                                    <div className="font-medium">{department.name}</div>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleAddService(department.id);
+                                      }}
+                                    >
+                                      <Plus className="h-3 w-3 mr-1" />
+                                      Adicionar Serviço
+                                    </Button>
+                                  </div>
+                                </AccordionTrigger>
+                                
+                                <AccordionContent>
+                                  <div className="pl-6 border-l-2 border-gray-200 ml-4 mt-2">
+                                    {department.services.length === 0 ? (
+                                      <p className="text-gray-500 py-2">Nenhum serviço cadastrado</p>
+                                    ) : (
+                                      <ul className="space-y-2">
+                                        {department.services.map((service) => (
+                                          <li key={service.id} className="p-2 hover:bg-gray-50 rounded-md flex items-center justify-between">
+                                            <span>{service.name}</span>
+                                            <Button variant="ghost" size="sm">
+                                              <ChevronRight className="h-4 w-4" />
+                                            </Button>
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    )}
+                                  </div>
+                                </AccordionContent>
+                              </AccordionItem>
+                            ))}
+                          </Accordion>
+                        )}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                ))
+              ) : (
                 <div className="text-center py-8 text-gray-500">
                   Nenhuma secretaria cadastrada. Clique em "Nova Secretaria" para começar.
                 </div>

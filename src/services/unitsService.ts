@@ -46,6 +46,10 @@ export const fetchSecretariesWithDepartments = async (): Promise<SecretaryWithDe
       return [];
     }
 
+    if (!secretaries || secretaries.length === 0) {
+      return [];
+    }
+
     // Fetch departments
     const { data: departments, error: departmentsError } = await supabase
       .from('departments')
@@ -72,10 +76,13 @@ export const fetchSecretariesWithDepartments = async (): Promise<SecretaryWithDe
 
     // Map the data to our hierarchical structure
     return secretaries.map(secretary => {
-      const secretaryDepartments = departments
+      const departmentsList = departments || [];
+      const servicesList = services || [];
+      
+      const secretaryDepartments = departmentsList
         .filter(dept => dept.secretary_id === secretary.id)
         .map(dept => {
-          const departmentServices = services
+          const departmentServices = servicesList
             .filter(service => service.department_id === dept.id)
             .map(service => ({
               id: service.id,
@@ -116,10 +123,11 @@ export const fetchSecretaries = async () => {
       .order('name');
     
     if (error) {
+      console.error('Error fetching secretaries:', error);
       throw error;
     }
     
-    return data;
+    return data || [];
   } catch (error) {
     console.error('Error fetching secretaries:', error);
     toast.error('Erro ao carregar secretarias');
@@ -137,11 +145,12 @@ export const fetchDepartmentsBySecretary = async (secretaryId: string) => {
       .order('name');
     
     if (error) {
+      console.error('Error fetching departments:', error);
       throw error;
     }
     
     // Add the secretaryId property for backward compatibility
-    return data.map((dept: any) => ({
+    return (data || []).map((dept: any) => ({
       ...dept,
       secretaryId: dept.secretary_id
     }));
@@ -162,10 +171,11 @@ export const fetchServicesByDepartment = async (departmentId: string) => {
       .order('name');
     
     if (error) {
+      console.error('Error fetching services:', error);
       throw error;
     }
     
-    return data;
+    return data || [];
   } catch (error) {
     console.error('Error fetching services:', error);
     toast.error('Erro ao carregar serviços');
@@ -186,8 +196,7 @@ export const addSecretary = async (name: string) => {
       throw error;
     }
     
-    toast.success('Secretaria adicionada com sucesso');
-    return data[0];
+    return data && data.length > 0 ? data[0] : null;
   } catch (error) {
     console.error('Error adding secretary:', error);
     toast.error('Erro ao adicionar secretaria');
@@ -211,7 +220,7 @@ export const addDepartment = async (name: string, secretaryId: string) => {
     }
     
     toast.success('Unidade adicionada com sucesso');
-    return data[0];
+    return data && data.length > 0 ? data[0] : null;
   } catch (error) {
     console.error('Error adding department:', error);
     toast.error('Erro ao adicionar unidade');
@@ -236,7 +245,7 @@ export const addService = async (name: string, departmentId: string, description
     }
     
     toast.success('Serviço adicionado com sucesso');
-    return data[0];
+    return data && data.length > 0 ? data[0] : null;
   } catch (error) {
     console.error('Error adding service:', error);
     toast.error('Erro ao adicionar serviço');

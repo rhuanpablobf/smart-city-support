@@ -48,6 +48,72 @@ export type Database = {
         }
         Relationships: []
       }
+      app_users: {
+        Row: {
+          avatar: string | null
+          created_at: string
+          department_id: string | null
+          department_name: string | null
+          email: string
+          id: string
+          is_online: boolean
+          max_concurrent_chats: number
+          name: string
+          role: string
+          secretary_id: string | null
+          secretary_name: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          avatar?: string | null
+          created_at?: string
+          department_id?: string | null
+          department_name?: string | null
+          email: string
+          id?: string
+          is_online?: boolean
+          max_concurrent_chats?: number
+          name: string
+          role: string
+          secretary_id?: string | null
+          secretary_name?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          avatar?: string | null
+          created_at?: string
+          department_id?: string | null
+          department_name?: string | null
+          email?: string
+          id?: string
+          is_online?: boolean
+          max_concurrent_chats?: number
+          name?: string
+          role?: string
+          secretary_id?: string | null
+          secretary_name?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "app_users_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "app_users_secretary_id_fkey"
+            columns: ["secretary_id"]
+            isOneToOne: false
+            referencedRelation: "secretaries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversations: {
         Row: {
           agent_id: string | null
@@ -310,6 +376,41 @@ export type Database = {
           },
         ]
       }
+      questions_answers: {
+        Row: {
+          answer: string
+          created_at: string
+          id: string
+          question: string
+          service_id: string
+          updated_at: string
+        }
+        Insert: {
+          answer: string
+          created_at?: string
+          id?: string
+          question: string
+          service_id: string
+          updated_at?: string
+        }
+        Update: {
+          answer?: string
+          created_at?: string
+          id?: string
+          question?: string
+          service_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "questions_answers_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       resolution_distribution: {
         Row: {
           created_at: string | null
@@ -355,6 +456,24 @@ export type Database = {
           id?: string
           period?: string
           rating?: number
+        }
+        Relationships: []
+      }
+      secretaries: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
         }
         Relationships: []
       }
@@ -443,6 +562,78 @@ export type Database = {
             columns: ["department_id"]
             isOneToOne: false
             referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_department_assignments: {
+        Row: {
+          created_at: string
+          department_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          department_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          department_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_department_assignments_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_department_assignments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "app_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_service_assignments: {
+        Row: {
+          created_at: string
+          id: string
+          service_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          service_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          service_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_service_assignments_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_service_assignments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "app_users"
             referencedColumns: ["id"]
           },
         ]
