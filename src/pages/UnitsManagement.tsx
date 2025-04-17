@@ -8,24 +8,70 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Loader2, ChevronRight, AlertCircle, RefreshCw } from 'lucide-react';
+import { 
+  Plus, 
+  Loader2, 
+  ChevronRight, 
+  AlertCircle, 
+  RefreshCw, 
+  Pencil, 
+  Trash2,
+  MessageSquarePlus
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { SecretaryWithDepartments, fetchSecretariesWithDepartments } from '@/services/unitsService';
+import { 
+  SecretaryWithDepartments, 
+  Department,
+  Service,
+  QuestionAnswer,
+  fetchSecretariesWithDepartments
+} from '@/services/unitsService';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { toast } from 'sonner';
 import AddSecretaryDialog from '@/components/units/AddSecretaryDialog';
 import AddDepartmentDialog from '@/components/units/AddDepartmentDialog';
 import AddServiceDialog from '@/components/units/AddServiceDialog';
+import EditSecretaryDialog from '@/components/units/EditSecretaryDialog';
+import EditDepartmentDialog from '@/components/units/EditDepartmentDialog';
+import EditServiceDialog from '@/components/units/EditServiceDialog';
+import DeleteConfirmationDialog from '@/components/units/DeleteConfirmationDialog';
+import { deleteSecretary, deleteDepartment, deleteService } from '@/services/unitsService';
+import QuestionAnswersList from '@/components/units/QuestionAnswersList';
 
 const UnitsManagement: React.FC = () => {
   const [secretariesData, setSecretariesData] = useState<SecretaryWithDepartments[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  
+  // Add dialogs
   const [isAddSecretaryOpen, setIsAddSecretaryOpen] = useState(false);
   const [isAddDepartmentOpen, setIsAddDepartmentOpen] = useState(false);
   const [isAddServiceOpen, setIsAddServiceOpen] = useState(false);
+  
+  // Edit dialogs
+  const [isEditSecretaryOpen, setIsEditSecretaryOpen] = useState(false);
+  const [isEditDepartmentOpen, setIsEditDepartmentOpen] = useState(false);
+  const [isEditServiceOpen, setIsEditServiceOpen] = useState(false);
+  
+  // Delete dialog
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [deleteItemType, setDeleteItemType] = useState<'secretary' | 'department' | 'service'>('secretary');
+  const [deleteItemId, setDeleteItemId] = useState<string>('');
+  const [deleteItemName, setDeleteItemName] = useState<string>('');
+  
+  // Selected items
   const [selectedSecretaryId, setSelectedSecretaryId] = useState<string | null>(null);
   const [selectedDepartmentId, setSelectedDepartmentId] = useState<string | null>(null);
+  const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
+  
+  // Selected items for edit
+  const [selectedSecretaryForEdit, setSelectedSecretaryForEdit] = useState<{id: string, name: string} | null>(null);
+  const [selectedDepartmentForEdit, setSelectedDepartmentForEdit] = useState<{id: string, name: string, secretary_id: string} | null>(null);
+  const [selectedServiceForEdit, setSelectedServiceForEdit] = useState<{id: string, name: string, description: string | null} | null>(null);
+
+  // Store expanded accordion items
+  const [expandedSecretaries, setExpandedSecretaries] = useState<string[]>([]);
+  const [expandedDepartments, setExpandedDepartments] = useState<string[]>([]);
 
   // Load data on component mount
   useEffect(() => {
@@ -38,6 +84,7 @@ const UnitsManagement: React.FC = () => {
     setLoadError(null);
     try {
       const data = await fetchSecretariesWithDepartments();
+      console.log("Loaded data:", data);
       setSecretariesData(data);
     } catch (error) {
       console.error('Error loading organizational structure:', error);
@@ -48,14 +95,82 @@ const UnitsManagement: React.FC = () => {
     }
   };
 
+  // Handle adding a new department
   const handleAddDepartment = (secretaryId: string) => {
+    console.log("Adding department to secretary:", secretaryId);
     setSelectedSecretaryId(secretaryId);
     setIsAddDepartmentOpen(true);
   };
 
+  // Handle adding a new service
   const handleAddService = (departmentId: string) => {
     setSelectedDepartmentId(departmentId);
     setIsAddServiceOpen(true);
+  };
+
+  // Handle editing a secretary
+  const handleEditSecretary = (secretary: {id: string, name: string}) => {
+    setSelectedSecretaryForEdit(secretary);
+    setIsEditSecretaryOpen(true);
+  };
+
+  // Handle editing a department
+  const handleEditDepartment = (department: {id: string, name: string, secretary_id: string}) => {
+    setSelectedDepartmentForEdit(department);
+    setIsEditDepartmentOpen(true);
+  };
+
+  // Handle editing a service
+  const handleEditService = (service: {id: string, name: string, description: string | null}) => {
+    setSelectedServiceForEdit(service);
+    setIsEditServiceOpen(true);
+  };
+
+  // Handle deleting a secretary
+  const handleDeleteSecretary = (secretaryId: string, secretaryName: string) => {
+    setDeleteItemType('secretary');
+    setDeleteItemId(secretaryId);
+    setDeleteItemName(secretaryName);
+    setIsDeleteConfirmOpen(true);
+  };
+
+  // Handle deleting a department
+  const handleDeleteDepartment = (departmentId: string, departmentName: string) => {
+    setDeleteItemType('department');
+    setDeleteItemId(departmentId);
+    setDeleteItemName(departmentName);
+    setIsDeleteConfirmOpen(true);
+  };
+
+  // Handle deleting a service
+  const handleDeleteService = (serviceId: string, serviceName: string) => {
+    setDeleteItemType('service');
+    setDeleteItemId(serviceId);
+    setDeleteItemName(serviceName);
+    setIsDeleteConfirmOpen(true);
+  };
+
+  // Confirm delete action
+  const handleConfirmDelete = async () => {
+    try {
+      let success = false;
+      
+      if (deleteItemType === 'secretary') {
+        success = await deleteSecretary(deleteItemId);
+      } else if (deleteItemType === 'department') {
+        success = await deleteDepartment(deleteItemId);
+      } else if (deleteItemType === 'service') {
+        success = await deleteService(deleteItemId);
+      }
+      
+      if (success) {
+        loadData();
+        setIsDeleteConfirmOpen(false);
+      }
+    } catch (error) {
+      console.error('Error deleting item:', error);
+      toast.error(`Erro ao excluir ${deleteItemType}`);
+    }
   };
 
   const onSuccess = () => {
@@ -108,24 +223,46 @@ const UnitsManagement: React.FC = () => {
               </Button>
             </div>
           ) : (
-            <Accordion type="multiple" className="w-full">
+            <Accordion 
+              type="multiple" 
+              className="w-full"
+              value={expandedSecretaries}
+              onValueChange={setExpandedSecretaries}
+            >
               {secretariesData.length > 0 ? (
                 secretariesData.map((secretary) => (
                   <AccordionItem key={secretary.id} value={secretary.id}>
                     <AccordionTrigger className="hover:bg-gray-50 px-4 rounded-md">
                       <div className="flex items-center justify-between w-full pr-4">
                         <div className="font-medium">{secretary.name}</div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleAddDepartment(secretary.id);
-                          }}
-                        >
-                          <Plus className="h-3 w-3 mr-1" />
-                          Adicionar Unidade
-                        </Button>
+                        <div className="flex items-center space-x-2" onClick={(e) => e.stopPropagation()}>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEditSecretary({id: secretary.id, name: secretary.name})}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteSecretary(secretary.id, secretary.name)}
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAddDepartment(secretary.id);
+                            }}
+                          >
+                            <Plus className="h-3 w-3 mr-1" />
+                            Adicionar Unidade
+                          </Button>
+                        </div>
                       </div>
                     </AccordionTrigger>
                     
@@ -134,23 +271,49 @@ const UnitsManagement: React.FC = () => {
                         {secretary.departments.length === 0 ? (
                           <p className="text-gray-500 py-2">Nenhuma unidade cadastrada</p>
                         ) : (
-                          <Accordion type="multiple" className="w-full">
+                          <Accordion 
+                            type="multiple" 
+                            className="w-full"
+                            value={expandedDepartments}
+                            onValueChange={setExpandedDepartments}
+                          >
                             {secretary.departments.map((department) => (
                               <AccordionItem key={department.id} value={department.id}>
                                 <AccordionTrigger className="hover:bg-gray-50 px-4 rounded-md">
                                   <div className="flex items-center justify-between w-full pr-4">
                                     <div className="font-medium">{department.name}</div>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleAddService(department.id);
-                                      }}
-                                    >
-                                      <Plus className="h-3 w-3 mr-1" />
-                                      Adicionar Serviço
-                                    </Button>
+                                    <div className="flex items-center space-x-2" onClick={(e) => e.stopPropagation()}>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleEditDepartment({
+                                          id: department.id, 
+                                          name: department.name,
+                                          secretary_id: department.secretary_id
+                                        })}
+                                      >
+                                        <Pencil className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleDeleteDepartment(department.id, department.name)}
+                                        className="text-red-500 hover:text-red-700"
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleAddService(department.id);
+                                        }}
+                                      >
+                                        <Plus className="h-3 w-3 mr-1" />
+                                        Adicionar Serviço
+                                      </Button>
+                                    </div>
                                   </div>
                                 </AccordionTrigger>
                                 
@@ -159,13 +322,43 @@ const UnitsManagement: React.FC = () => {
                                     {department.services.length === 0 ? (
                                       <p className="text-gray-500 py-2">Nenhum serviço cadastrado</p>
                                     ) : (
-                                      <ul className="space-y-2">
+                                      <ul className="space-y-4">
                                         {department.services.map((service) => (
-                                          <li key={service.id} className="p-2 hover:bg-gray-50 rounded-md flex items-center justify-between">
-                                            <span>{service.name}</span>
-                                            <Button variant="ghost" size="sm">
-                                              <ChevronRight className="h-4 w-4" />
-                                            </Button>
+                                          <li key={service.id} className="p-3 bg-gray-50 rounded-md">
+                                            <div className="flex items-center justify-between mb-2">
+                                              <h4 className="font-medium">{service.name}</h4>
+                                              <div className="flex space-x-2">
+                                                <Button
+                                                  variant="ghost"
+                                                  size="sm"
+                                                  onClick={() => handleEditService({
+                                                    id: service.id, 
+                                                    name: service.name,
+                                                    description: service.description
+                                                  })}
+                                                >
+                                                  <Pencil className="h-4 w-4" />
+                                                </Button>
+                                                <Button
+                                                  variant="ghost"
+                                                  size="sm"
+                                                  onClick={() => handleDeleteService(service.id, service.name)}
+                                                  className="text-red-500 hover:text-red-700"
+                                                >
+                                                  <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                              </div>
+                                            </div>
+                                            
+                                            {service.description && (
+                                              <p className="text-sm text-gray-600 mb-2">{service.description}</p>
+                                            )}
+                                            
+                                            <QuestionAnswersList 
+                                              serviceId={service.id} 
+                                              initialQuestions={service.questionsAnswers}
+                                              onSuccess={onSuccess}
+                                            />
                                           </li>
                                         ))}
                                       </ul>
@@ -211,6 +404,39 @@ const UnitsManagement: React.FC = () => {
         setIsOpen={setIsAddServiceOpen}
         departmentId={selectedDepartmentId}
         onSuccess={onSuccess}
+      />
+
+      {/* Edit Secretary Dialog */}
+      <EditSecretaryDialog
+        isOpen={isEditSecretaryOpen}
+        setIsOpen={setIsEditSecretaryOpen}
+        secretary={selectedSecretaryForEdit}
+        onSuccess={onSuccess}
+      />
+
+      {/* Edit Department Dialog */}
+      <EditDepartmentDialog
+        isOpen={isEditDepartmentOpen}
+        setIsOpen={setIsEditDepartmentOpen}
+        department={selectedDepartmentForEdit}
+        onSuccess={onSuccess}
+      />
+
+      {/* Edit Service Dialog */}
+      <EditServiceDialog
+        isOpen={isEditServiceOpen}
+        setIsOpen={setIsEditServiceOpen}
+        service={selectedServiceForEdit}
+        onSuccess={onSuccess}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteConfirmationDialog
+        isOpen={isDeleteConfirmOpen}
+        setIsOpen={setIsDeleteConfirmOpen}
+        itemType={deleteItemType}
+        itemName={deleteItemName}
+        onConfirm={handleConfirmDelete}
       />
     </div>
   );

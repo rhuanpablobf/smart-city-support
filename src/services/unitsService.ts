@@ -73,24 +73,48 @@ export const fetchSecretariesWithDepartments = async (): Promise<SecretaryWithDe
       toast.error('Erro ao carregar serviços');
       return [];
     }
+    
+    // Fetch questions and answers for all services
+    const { data: questionsAnswers, error: questionsError } = await supabase
+      .from('questions_answers')
+      .select('*')
+      .order('id');
+
+    if (questionsError) {
+      console.error('Error fetching questions and answers:', questionsError);
+      toast.error('Erro ao carregar perguntas e respostas');
+    }
 
     // Map the data to our hierarchical structure
     return secretaries.map(secretary => {
       const departmentsList = departments || [];
       const servicesList = services || [];
+      const qaList = questionsAnswers || [];
       
       const secretaryDepartments = departmentsList
         .filter(dept => dept.secretary_id === secretary.id)
         .map(dept => {
           const departmentServices = servicesList
             .filter(service => service.department_id === dept.id)
-            .map(service => ({
-              id: service.id,
-              name: service.name,
-              department_id: service.department_id,
-              description: service.description,
-              questionsAnswers: []
-            }));
+            .map(service => {
+              // Find all questions/answers for this service
+              const serviceQAs = qaList
+                .filter(qa => qa.service_id === service.id)
+                .map(qa => ({
+                  id: qa.id,
+                  service_id: qa.service_id,
+                  question: qa.question,
+                  answer: qa.answer
+                }));
+
+              return {
+                id: service.id,
+                name: service.name,
+                department_id: service.department_id,
+                description: service.description,
+                questionsAnswers: serviceQAs
+              };
+            });
 
           return {
             id: dept.id,
@@ -183,6 +207,28 @@ export const fetchServicesByDepartment = async (departmentId: string) => {
   }
 };
 
+// Fetch questions and answers by service ID
+export const fetchQuestionsByService = async (serviceId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('questions_answers')
+      .select('*')
+      .eq('service_id', serviceId)
+      .order('id');
+    
+    if (error) {
+      console.error('Error fetching questions:', error);
+      throw error;
+    }
+    
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching questions:', error);
+    toast.error('Erro ao carregar perguntas e respostas');
+    return [];
+  }
+};
+
 // Add a new secretary
 export const addSecretary = async (name: string) => {
   try {
@@ -204,6 +250,49 @@ export const addSecretary = async (name: string) => {
   }
 };
 
+// Update an existing secretary
+export const updateSecretary = async (id: string, name: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('secretaries')
+      .update({ name })
+      .eq('id', id)
+      .select();
+    
+    if (error) {
+      throw error;
+    }
+    
+    toast.success('Secretaria atualizada com sucesso');
+    return data && data.length > 0 ? data[0] : null;
+  } catch (error) {
+    console.error('Error updating secretary:', error);
+    toast.error('Erro ao atualizar secretaria');
+    return null;
+  }
+};
+
+// Delete a secretary
+export const deleteSecretary = async (id: string) => {
+  try {
+    const { error } = await supabase
+      .from('secretaries')
+      .delete()
+      .eq('id', id);
+    
+    if (error) {
+      throw error;
+    }
+    
+    toast.success('Secretaria removida com sucesso');
+    return true;
+  } catch (error) {
+    console.error('Error deleting secretary:', error);
+    toast.error('Erro ao remover secretaria');
+    return false;
+  }
+};
+
 // Add a new department
 export const addDepartment = async (name: string, secretaryId: string) => {
   try {
@@ -216,6 +305,7 @@ export const addDepartment = async (name: string, secretaryId: string) => {
       .select();
     
     if (error) {
+      console.error('Error adding department:', error);
       throw error;
     }
     
@@ -225,6 +315,49 @@ export const addDepartment = async (name: string, secretaryId: string) => {
     console.error('Error adding department:', error);
     toast.error('Erro ao adicionar unidade');
     return null;
+  }
+};
+
+// Update an existing department
+export const updateDepartment = async (id: string, name: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('departments')
+      .update({ name })
+      .eq('id', id)
+      .select();
+    
+    if (error) {
+      throw error;
+    }
+    
+    toast.success('Unidade atualizada com sucesso');
+    return data && data.length > 0 ? data[0] : null;
+  } catch (error) {
+    console.error('Error updating department:', error);
+    toast.error('Erro ao atualizar unidade');
+    return null;
+  }
+};
+
+// Delete a department
+export const deleteDepartment = async (id: string) => {
+  try {
+    const { error } = await supabase
+      .from('departments')
+      .delete()
+      .eq('id', id);
+    
+    if (error) {
+      throw error;
+    }
+    
+    toast.success('Unidade removida com sucesso');
+    return true;
+  } catch (error) {
+    console.error('Error deleting department:', error);
+    toast.error('Erro ao remover unidade');
+    return false;
   }
 };
 
@@ -250,5 +383,122 @@ export const addService = async (name: string, departmentId: string, description
     console.error('Error adding service:', error);
     toast.error('Erro ao adicionar serviço');
     return null;
+  }
+};
+
+// Update an existing service
+export const updateService = async (id: string, name: string, description: string | null = null) => {
+  try {
+    const { data, error } = await supabase
+      .from('services')
+      .update({ 
+        name,
+        description 
+      })
+      .eq('id', id)
+      .select();
+    
+    if (error) {
+      throw error;
+    }
+    
+    toast.success('Serviço atualizado com sucesso');
+    return data && data.length > 0 ? data[0] : null;
+  } catch (error) {
+    console.error('Error updating service:', error);
+    toast.error('Erro ao atualizar serviço');
+    return null;
+  }
+};
+
+// Delete a service
+export const deleteService = async (id: string) => {
+  try {
+    const { error } = await supabase
+      .from('services')
+      .delete()
+      .eq('id', id);
+    
+    if (error) {
+      throw error;
+    }
+    
+    toast.success('Serviço removido com sucesso');
+    return true;
+  } catch (error) {
+    console.error('Error deleting service:', error);
+    toast.error('Erro ao remover serviço');
+    return false;
+  }
+};
+
+// Add a new question/answer
+export const addQuestionAnswer = async (serviceId: string, question: string, answer: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('questions_answers')
+      .insert({ 
+        service_id: serviceId,
+        question,
+        answer 
+      })
+      .select();
+    
+    if (error) {
+      throw error;
+    }
+    
+    toast.success('Pergunta e resposta adicionadas com sucesso');
+    return data && data.length > 0 ? data[0] : null;
+  } catch (error) {
+    console.error('Error adding question/answer:', error);
+    toast.error('Erro ao adicionar pergunta e resposta');
+    return null;
+  }
+};
+
+// Update an existing question/answer
+export const updateQuestionAnswer = async (id: string, question: string, answer: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('questions_answers')
+      .update({ 
+        question,
+        answer 
+      })
+      .eq('id', id)
+      .select();
+    
+    if (error) {
+      throw error;
+    }
+    
+    toast.success('Pergunta e resposta atualizadas com sucesso');
+    return data && data.length > 0 ? data[0] : null;
+  } catch (error) {
+    console.error('Error updating question/answer:', error);
+    toast.error('Erro ao atualizar pergunta e resposta');
+    return null;
+  }
+};
+
+// Delete a question/answer
+export const deleteQuestionAnswer = async (id: string) => {
+  try {
+    const { error } = await supabase
+      .from('questions_answers')
+      .delete()
+      .eq('id', id);
+    
+    if (error) {
+      throw error;
+    }
+    
+    toast.success('Pergunta e resposta removidas com sucesso');
+    return true;
+  } catch (error) {
+    console.error('Error deleting question/answer:', error);
+    toast.error('Erro ao remover pergunta e resposta');
+    return false;
   }
 };
