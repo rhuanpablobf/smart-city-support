@@ -1,8 +1,17 @@
 
 import { useState, useEffect } from 'react';
-import { User, UserRole } from '@/types/auth';
+import { User, UserRole, UserStatus } from '@/types/auth';
 import { toast } from 'sonner';
 import { supabase } from '@/services/base/supabaseBase';
+
+// Helper function to validate and convert status strings
+function validateStatus(statusString: string): UserStatus {
+  if (statusString === 'online' || statusString === 'offline' || statusString === 'break') {
+    return statusString as UserStatus;
+  }
+  // Default to 'offline' for any invalid status values
+  return 'offline';
+}
 
 export function useUsersDomain(
   currentUserRole: UserRole | undefined, 
@@ -40,7 +49,7 @@ export function useUsersDomain(
           email: user.email,
           role: user.role as UserRole,
           isOnline: user.is_online,
-          status: user.status,
+          status: validateStatus(user.status), // Validate the status
           maxConcurrentChats: user.max_concurrent_chats,
           secretaryId: user.secretary_id,
           secretaryName: user.secretary_name,
@@ -95,7 +104,7 @@ export function useUsersDomain(
     
     try {
       // Admin sempre inicia com status offline
-      const isOfflineByDefault = newUser.role === 'admin';
+      const initialStatus: UserStatus = newUser.role === 'admin' ? 'offline' : 'online';
       
       // Inserir usuário no Supabase
       const { data, error } = await supabase
@@ -104,8 +113,8 @@ export function useUsersDomain(
           name: newUser.name,
           email: newUser.email,
           role: newUser.role,
-          is_online: !isOfflineByDefault,
-          status: isOfflineByDefault ? 'offline' : 'online',
+          is_online: initialStatus !== 'offline',
+          status: initialStatus,
           max_concurrent_chats: newUser.maxConcurrentChats || 5,
           secretary_id: newUser.secretaryId,
           secretary_name: newUser.secretaryName,
@@ -133,7 +142,7 @@ export function useUsersDomain(
         email: data.email,
         role: data.role as UserRole,
         isOnline: data.is_online,
-        status: data.status,
+        status: validateStatus(data.status),
         maxConcurrentChats: data.max_concurrent_chats,
         secretaryId: data.secretary_id,
         secretaryName: data.secretary_name,

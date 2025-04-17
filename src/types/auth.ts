@@ -1,6 +1,9 @@
 
 export type UserRole = 'admin' | 'manager' | 'agent' | 'user' | 'secretary_admin';
 
+// Update the status type to match what's coming from the database
+export type UserStatus = 'online' | 'offline' | 'break';
+
 export interface User {
   id: string;
   name: string;
@@ -8,7 +11,7 @@ export interface User {
   role: UserRole;
   avatar?: string;
   isOnline?: boolean;
-  status?: 'online' | 'offline' | 'break';
+  status?: UserStatus;
   maxConcurrentChats?: number;
   departmentId?: string;
   departmentName?: string;
