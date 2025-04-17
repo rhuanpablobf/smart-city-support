@@ -8,7 +8,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Loader2, ChevronRight } from 'lucide-react';
+import { Plus, Loader2, ChevronRight, AlertCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { SecretaryWithDepartments, fetchSecretariesWithDepartments } from '@/services/unitsService';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -20,6 +20,7 @@ import AddServiceDialog from '@/components/units/AddServiceDialog';
 const UnitsManagement: React.FC = () => {
   const [secretariesData, setSecretariesData] = useState<SecretaryWithDepartments[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [isAddSecretaryOpen, setIsAddSecretaryOpen] = useState(false);
   const [isAddDepartmentOpen, setIsAddDepartmentOpen] = useState(false);
   const [isAddServiceOpen, setIsAddServiceOpen] = useState(false);
@@ -34,12 +35,14 @@ const UnitsManagement: React.FC = () => {
   // Fetch all secretaries with departments and services
   const loadData = async () => {
     setIsLoading(true);
+    setLoadError(null);
     try {
       const data = await fetchSecretariesWithDepartments();
       setSecretariesData(data);
     } catch (error) {
       console.error('Error loading organizational structure:', error);
       toast.error('Erro ao carregar a estrutura organizacional');
+      setLoadError('Erro ao carregar secretarias. Tente recarregar a página.');
     } finally {
       setIsLoading(false);
     }
@@ -89,6 +92,14 @@ const UnitsManagement: React.FC = () => {
             <div className="flex items-center justify-center p-8">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
               <span className="ml-2">Carregando estrutura organizacional...</span>
+            </div>
+          ) : loadError ? (
+            <div className="flex items-center justify-center p-8 text-red-500">
+              <AlertCircle className="h-6 w-6 mr-2" />
+              <span>{loadError}</span>
+              <Button variant="outline" size="sm" className="ml-4" onClick={loadData}>
+                Tentar novamente
+              </Button>
             </div>
           ) : (
             <Accordion type="multiple" className="w-full">

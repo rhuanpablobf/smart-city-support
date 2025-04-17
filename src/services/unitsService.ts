@@ -179,15 +179,15 @@ export const addSecretary = async (name: string) => {
     const { data, error } = await supabase
       .from('secretaries')
       .insert({ name })
-      .select()
-      .single();
+      .select();
     
     if (error) {
+      console.error('Supabase error details:', error);
       throw error;
     }
     
     toast.success('Secretaria adicionada com sucesso');
-    return data;
+    return data[0];
   } catch (error) {
     console.error('Error adding secretary:', error);
     toast.error('Erro ao adicionar secretaria');
@@ -204,15 +204,14 @@ export const addDepartment = async (name: string, secretaryId: string) => {
         name, 
         secretary_id: secretaryId 
       })
-      .select()
-      .single();
+      .select();
     
     if (error) {
       throw error;
     }
     
     toast.success('Unidade adicionada com sucesso');
-    return data;
+    return data[0];
   } catch (error) {
     console.error('Error adding department:', error);
     toast.error('Erro ao adicionar unidade');
@@ -230,15 +229,14 @@ export const addService = async (name: string, departmentId: string, description
         department_id: departmentId,
         description 
       })
-      .select()
-      .single();
+      .select();
     
     if (error) {
       throw error;
     }
     
     toast.success('Serviço adicionado com sucesso');
-    return data;
+    return data[0];
   } catch (error) {
     console.error('Error adding service:', error);
     toast.error('Erro ao adicionar serviço');

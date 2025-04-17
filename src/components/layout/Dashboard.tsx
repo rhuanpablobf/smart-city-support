@@ -11,7 +11,8 @@ import {
   Menu,
   X,
   User,
-  ChevronDown
+  ChevronDown,
+  Building2
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -71,6 +72,12 @@ const DashboardLayout = () => {
       icon: <Users className="h-5 w-5" />,
       href: '/users',
       allowed: isAdmin || isManager
+    },
+    {
+      name: 'Unidades e Serviços',
+      icon: <Building2 className="h-5 w-5" />,
+      href: '/units',
+      allowed: isAdmin
     },
     {
       name: 'Relatórios',

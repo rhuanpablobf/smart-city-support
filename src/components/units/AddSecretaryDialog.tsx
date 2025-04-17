@@ -19,32 +19,44 @@ const AddSecretaryDialog: React.FC<AddSecretaryDialogProps> = ({
 }) => {
   const [name, setName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleAdd = async () => {
     if (!name.trim()) {
+      setError('O nome da secretaria é obrigatório');
       return;
     }
     
     setIsSubmitting(true);
+    setError(null);
+    
     try {
       const result = await addSecretary(name);
       if (result) {
         setName('');
         setIsOpen(false);
         onSuccess();
+      } else {
+        setError('Erro ao adicionar secretaria. Tente novamente.');
       }
+    } catch (err) {
+      console.error('Error in handleAdd:', err);
+      setError('Erro ao adicionar secretaria. Tente novamente.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const handleClose = () => {
+    if (!isSubmitting) {
+      setName('');
+      setError(null);
+      setIsOpen(false);
+    }
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => {
-      if (!isSubmitting) {
-        setIsOpen(open);
-        if (!open) setName('');
-      }
-    }}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Adicionar Nova Secretaria</DialogTitle>
@@ -61,12 +73,15 @@ const AddSecretaryDialog: React.FC<AddSecretaryDialogProps> = ({
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
+            {error && (
+              <p className="text-sm text-red-500">{error}</p>
+            )}
           </div>
         </div>
         <DialogFooter>
           <Button 
             variant="outline" 
-            onClick={() => setIsOpen(false)}
+            onClick={handleClose}
             disabled={isSubmitting}
           >
             Cancelar
