@@ -12,6 +12,7 @@ export interface Department {
   id: string;
   name: string;
   secretary_id: string;
+  secretaryId?: string; // Add for compatibility
   services: Service[];
 }
 
@@ -88,6 +89,7 @@ export const fetchSecretariesWithDepartments = async (): Promise<SecretaryWithDe
             id: dept.id,
             name: dept.name,
             secretary_id: dept.secretary_id,
+            secretaryId: dept.secretary_id, // Add for compatibility
             services: departmentServices
           };
         });
@@ -138,7 +140,11 @@ export const fetchDepartmentsBySecretary = async (secretaryId: string) => {
       throw error;
     }
     
-    return data;
+    // Add the secretaryId property for backward compatibility
+    return data.map((dept: any) => ({
+      ...dept,
+      secretaryId: dept.secretary_id
+    }));
   } catch (error) {
     console.error('Error fetching departments:', error);
     toast.error('Erro ao carregar departamentos');

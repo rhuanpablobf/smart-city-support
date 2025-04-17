@@ -12,7 +12,8 @@ interface Secretary {
 interface Department {
   id: string;
   name: string;
-  secretaryId: string;
+  secretary_id: string;
+  secretaryId?: string;
 }
 
 interface UserFiltersProps {
@@ -78,7 +79,7 @@ const UserFilters: React.FC<UserFiltersProps> = ({
                 <SelectContent>
                   <SelectItem value="all">Todos os departamentos</SelectItem>
                   {mockDepartments
-                    .filter(d => d.secretaryId === filterSecretaryId)
+                    .filter(d => d.secretary_id === filterSecretaryId)
                     .map(department => (
                       <SelectItem key={department.id} value={department.id}>
                         {department.name}

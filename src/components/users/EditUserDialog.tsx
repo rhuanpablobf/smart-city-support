@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,7 +10,8 @@ import { toast } from 'sonner';
 interface Department {
   id: string;
   name: string;
-  secretaryId: string;
+  secretary_id: string;
+  secretaryId?: string;
 }
 
 interface Secretary {
@@ -209,7 +209,7 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({
                 </SelectTrigger>
                 <SelectContent>
                   {mockDepartments
-                    .filter(d => d.secretaryId === localUser.secretaryId)
+                    .filter(d => d.secretary_id === localUser.secretaryId)
                     .map(department => (
                       <SelectItem key={department.id} value={department.id}>
                         {department.name}

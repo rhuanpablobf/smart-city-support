@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,7 +14,8 @@ interface Secretary {
 interface Department {
   id: string;
   name: string;
-  secretaryId: string;
+  secretary_id: string;
+  secretaryId?: string;
 }
 
 interface AddUserDialogProps {

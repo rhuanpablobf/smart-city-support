@@ -14,6 +14,8 @@ export interface Department {
   id: string;
   name: string;
   secretary_id: string;
+  // Add secretaryId as an alias for compatibility
+  secretaryId?: string;
 }
 
 export function useSecretaryDepartment(
@@ -62,11 +64,12 @@ export function useSecretaryDepartment(
           }
         }
         
-        // Map the departments data to our format
+        // Map the departments data to our format, making sure to include both secretary_id and secretaryId
         const mappedDepartments = departmentsData.map((department: any) => ({
           id: department.id,
           name: department.name,
-          secretaryId: department.secretary_id
+          secretary_id: department.secretary_id,
+          secretaryId: department.secretary_id // Add this for compatibility
         }));
         
         setDepartments(mappedDepartments);
@@ -95,10 +98,10 @@ export function useSecretaryDepartment(
   const availableDepartments = useMemo(() => {
     if (isAdmin || isSecretaryAdmin) {
       if (selectedSecretaryId) {
-        return departments.filter(d => d.secretaryId === selectedSecretaryId);
+        return departments.filter(d => d.secretary_id === selectedSecretaryId);
       }
       return isSecretaryAdmin && currentUserSecretaryId 
-        ? departments.filter(d => d.secretaryId === currentUserSecretaryId)
+        ? departments.filter(d => d.secretary_id === currentUserSecretaryId)
         : [];
     } else if (isManager && currentUserDepartmentId) {
       return departments.filter(d => d.id === currentUserDepartmentId);
