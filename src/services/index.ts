@@ -6,3 +6,4 @@ export * from './agentService';
 export * from './overviewService';
 export * from './conversationService';
 export * from './messageService';
+export * from './unitsService';

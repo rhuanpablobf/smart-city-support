@@ -93,6 +93,95 @@ export interface CustomDatabase extends SupabaseDatabase {
           created_at?: string;
         };
       };
+      services: {
+        Row: {
+          id: string;
+          name: string;
+          department_id: string;
+          description: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          department_id: string;
+          description?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          department_id?: string;
+          description?: string | null;
+          created_at?: string;
+        };
+      };
+      questions_answers: {
+        Row: {
+          id: string;
+          service_id: string;
+          question: string;
+          answer: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          service_id: string;
+          question: string;
+          answer: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          service_id?: string;
+          question?: string;
+          answer?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      user_service_assignments: {
+        Row: {
+          id: string;
+          user_id: string;
+          service_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          service_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          service_id?: string;
+          created_at?: string;
+        };
+      };
+      user_department_assignments: {
+        Row: {
+          id: string;
+          user_id: string;
+          department_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          department_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          department_id?: string;
+          created_at?: string;
+        };
+      };
     };
   };
 }

@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import UsersManagement from "./pages/UsersManagement";
+import UnitsManagement from "./pages/UnitsManagement";
 import NotFound from "./pages/NotFound";
 import DashboardLayout from "./components/layout/Dashboard";
 import { useAuth } from "./contexts/AuthContext";
@@ -58,6 +59,7 @@ const App = () => (
               <Route path="reports" element={<Reports />} />
               <Route path="settings" element={<Settings />} />
               <Route path="users" element={<UsersManagement />} />
+              <Route path="units" element={<UnitsManagement />} />
             </Route>
             
             <Route path="*" element={<NotFound />} />

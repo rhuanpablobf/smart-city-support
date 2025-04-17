@@ -1,7 +1,9 @@
+
 import { useState, useEffect, useMemo } from 'react';
 import { UserRole, User } from '@/types/auth';
 import { supabase } from '@/services/base/supabaseBase';
 import { toast } from 'sonner';
+import { fetchSecretaries, fetchDepartmentsBySecretary } from '@/services/unitsService';
 
 export interface Secretary {
   id: string;
@@ -11,7 +13,7 @@ export interface Secretary {
 export interface Department {
   id: string;
   name: string;
-  secretaryId: string;
+  secretary_id: string;
 }
 
 export function useSecretaryDepartment(
@@ -37,40 +39,31 @@ export function useSecretaryDepartment(
       try {
         setIsLoading(true);
         
-        // Fetch secretaries with proper typing
-        const { data: secretariesData, error: secretariesError } = await supabase
-          .from('secretaries')
-          .select('*')
-          .order('name');
+        // Fetch secretaries
+        const secretariesData = await fetchSecretaries();
+        setSecretaries(secretariesData);
         
-        if (secretariesError) {
-          console.error('Error fetching secretaries:', secretariesError);
-          toast.error('Erro ao carregar secretarias');
-          return;
+        // Fetch all departments or filter by secretary_id if user is secretary_admin
+        let departmentsData = [];
+        
+        if (isSecretaryAdmin && currentUserSecretaryId) {
+          departmentsData = await fetchDepartmentsBySecretary(currentUserSecretaryId);
+        } else {
+          const { data, error } = await supabase
+            .from('departments')
+            .select('*')
+            .order('name');
+            
+          if (error) {
+            console.error('Error fetching all departments:', error);
+            toast.error('Erro ao carregar departamentos');
+          } else {
+            departmentsData = data;
+          }
         }
         
-        // Map secretaries data
-        const mappedSecretaries = secretariesData.map((secretary) => ({
-          id: secretary.id,
-          name: secretary.name
-        }));
-        
-        setSecretaries(mappedSecretaries);
-        
-        // Fetch departments
-        const { data: departmentsData, error: departmentsError } = await supabase
-          .from('departments')
-          .select('*')
-          .order('name');
-        
-        if (departmentsError) {
-          console.error('Error fetching departments:', departmentsError);
-          toast.error('Erro ao carregar departamentos');
-          return;
-        }
-        
-        // Map departments data
-        const mappedDepartments = departmentsData.map((department) => ({
+        // Map the departments data to our format
+        const mappedDepartments = departmentsData.map((department: any) => ({
           id: department.id,
           name: department.name,
           secretaryId: department.secretary_id
@@ -86,7 +79,7 @@ export function useSecretaryDepartment(
     };
     
     fetchData();
-  }, []);
+  }, [currentUserSecretaryId, isSecretaryAdmin]);
 
   // Get available secretary options based on user role
   const availableSecretaries = useMemo(() => {
