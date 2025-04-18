@@ -13,7 +13,7 @@ import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ChatWindow from '@/components/chat/ChatWindow';
 import { useAuth } from '@/contexts/AuthContext';
-import { Conversation } from '@/types/chat';
+import { Conversation, Message, MessageType } from '@/types/chat';
 import { supabase } from '@/services/base/supabaseBase';
 import { toast } from 'sonner';
 
@@ -65,7 +65,7 @@ const Contact: React.FC = () => {
           return;
         }
         
-        // Format data
+        // Format data with proper type casting
         const formattedConversation: Conversation = {
           id: convData.id,
           userId: convData.user_id,
@@ -74,19 +74,19 @@ const Contact: React.FC = () => {
           agentId: convData.agent_id || undefined,
           department: convData.department_id,
           service: convData.service_id,
-          status: convData.status,
+          status: convData.status as 'active' | 'waiting' | 'closed',
           startedAt: new Date(convData.started_at),
           lastMessageAt: new Date(convData.last_message_at),
           messages: messagesData.map(msg => ({
             id: msg.id,
             conversationId: msg.conversation_id,
             content: msg.content,
-            type: msg.type,
+            type: msg.type as MessageType,
             senderId: msg.sender_id,
             senderName: msg.sender_name,
             senderRole: msg.sender_role,
             timestamp: new Date(msg.timestamp),
-            status: msg.status,
+            status: msg.status as 'sent' | 'delivered' | 'read',
             fileUrl: msg.file_url || undefined,
             fileName: msg.file_name || undefined
           })),
@@ -117,16 +117,16 @@ const Contact: React.FC = () => {
           filter: `conversation_id=eq.${conversationId}`
         },
         (payload) => {
-          const newMessage = {
+          const newMessage: Message = {
             id: payload.new.id,
             conversationId: payload.new.conversation_id,
             content: payload.new.content,
-            type: payload.new.type,
+            type: payload.new.type as MessageType,
             senderId: payload.new.sender_id,
             senderName: payload.new.sender_name,
             senderRole: payload.new.sender_role,
             timestamp: new Date(payload.new.timestamp),
-            status: payload.new.status,
+            status: payload.new.status as 'sent' | 'delivered' | 'read',
             fileUrl: payload.new.file_url || undefined,
             fileName: payload.new.file_name || undefined
           };
