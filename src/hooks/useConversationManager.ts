@@ -6,6 +6,7 @@ import { fetchConversations } from '@/services/conversationService';
 import { useConversationState } from './chat/useConversationState';
 import { useConversationActions } from './chat/useConversationActions';
 import { toast } from 'sonner';
+import { supabase } from '@/services/base/supabaseBase';
 
 export function useConversationManager() {
   const { authState } = useAuth();
@@ -72,8 +73,37 @@ export function useConversationManager() {
   };
 
   const updateConversationStatus = async (conversationId: string) => {
-    const result = await handleCloseConversation(conversationId);
-    if (result) {
+    try {
+      // Add system message about closing the conversation
+      await supabase
+        .from('messages')
+        .insert({
+          conversation_id: conversationId,
+          content: 'Atendimento encerrado.',
+          type: 'system',
+          sender_id: 'system',
+          sender_name: 'Sistema',
+          sender_role: 'system',
+          status: 'delivered'
+        });
+        
+      // Update conversation status to closed and set closed_at timestamp
+      const { data, error } = await supabase
+        .from('conversations')
+        .update({ 
+          status: 'closed',
+          closed_at: new Date().toISOString()
+        })
+        .eq('id', conversationId)
+        .select();
+      
+      if (error) {
+        console.error('Error closing conversation:', error);
+        toast.error('Erro ao encerrar atendimento');
+        return null;
+      }
+      
+      // Update state
       setConversations(prev => 
         prev.map(conv => 
           conv.id === conversationId ? { ...conv, status: 'closed' } : conv
@@ -81,18 +111,16 @@ export function useConversationManager() {
       );
       
       if (currentConversation?.id === conversationId) {
-        setCurrentConversation(prev => 
-          prev ? { ...prev, status: 'closed' } : undefined
-        );
+        setCurrentConversation(undefined);
       }
       
-      // Reload conversations to reflect the updated status
-      const updatedConversations = await fetchConversations();
-      setConversations(updatedConversations);
-      
-      return result;
+      toast.success('Atendimento encerrado');
+      return data[0];
+    } catch (error) {
+      console.error('Error closing conversation:', error);
+      toast.error('Erro ao encerrar atendimento');
+      return null;
     }
-    return null;
   };
 
   const transferConversation = async (
@@ -100,16 +128,45 @@ export function useConversationManager() {
     targetAgentId: string,
     targetDepartmentId?: string
   ) => {
-    const result = await handleTransferConversation(conversationId, targetAgentId, targetDepartmentId);
-    if (result) {
-      // Update local state with transfer result
+    try {
+      // Add system message about transfer
+      await supabase
+        .from('messages')
+        .insert({
+          conversation_id: conversationId,
+          content: 'Atendimento transferido.',
+          type: 'system',
+          sender_id: 'system',
+          sender_name: 'Sistema',
+          sender_role: 'system',
+          status: 'delivered'
+        });
+      
+      // Update conversation with new agent and department
+      const updateData: any = { agent_id: targetAgentId };
+      if (targetDepartmentId) {
+        updateData.department_id = targetDepartmentId;
+      }
+      
+      const { data, error } = await supabase
+        .from('conversations')
+        .update(updateData)
+        .eq('id', conversationId)
+        .select();
+      
+      if (error) {
+        console.error('Error transferring conversation:', error);
+        toast.error('Erro ao transferir atendimento');
+        return null;
+      }
+      
+      // Update state
       setConversations(prev => 
         prev.map(conv => 
           conv.id === conversationId ? { 
             ...conv, 
-            agentId: result.agentId || undefined,
-            department: result.department || conv.department,
-            status: result.status || conv.status
+            agentId: targetAgentId,
+            department: targetDepartmentId || conv.department
           } : conv
         )
       );
@@ -118,13 +175,13 @@ export function useConversationManager() {
         setCurrentConversation(undefined);
       }
       
-      // Reload conversations to reflect the updated transfer
-      const updatedConversations = await fetchConversations();
-      setConversations(updatedConversations);
-      
-      return result;
+      toast.success('Atendimento transferido');
+      return data[0];
+    } catch (error) {
+      console.error('Error transferring conversation:', error);
+      toast.error('Erro ao transferir atendimento');
+      return null;
     }
-    return null;
   };
 
   return {

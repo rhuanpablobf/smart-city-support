@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -5,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { User, UserRole } from '@/types/auth';
+import { toast } from 'sonner';
 
 interface Secretary {
   id: string;
@@ -49,6 +51,18 @@ const AddUserDialog: React.FC<AddUserDialogProps> = ({
   handleDepartmentChange,
   isSubmitting = false,
 }) => {
+  const onSelectSecretary = (value: string) => {
+    console.log("Secretary selected:", value);
+    handleSecretaryChange(value);
+    setNewUser('secretaryId', value);
+  };
+
+  const onSelectDepartment = (value: string) => {
+    console.log("Department selected:", value);
+    handleDepartmentChange(value);
+    setNewUser('departmentId', value);
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
       if (!isSubmitting) {
@@ -112,7 +126,7 @@ const AddUserDialog: React.FC<AddUserDialogProps> = ({
               <Label htmlFor="secretary">Secretaria</Label>
               <Select 
                 value={newUser.secretaryId || ''}
-                onValueChange={(value) => handleSecretaryChange(value)}
+                onValueChange={onSelectSecretary}
               >
                 <SelectTrigger id="secretary">
                   <SelectValue placeholder="Selecione a secretaria" />
@@ -133,13 +147,16 @@ const AddUserDialog: React.FC<AddUserDialogProps> = ({
               <Label htmlFor="department">Departamento</Label>
               <Select 
                 value={newUser.departmentId || ''}
-                onValueChange={(value) => handleDepartmentChange(value)}
+                onValueChange={onSelectDepartment}
               >
                 <SelectTrigger id="department">
                   <SelectValue placeholder="Selecione o departamento" />
                 </SelectTrigger>
                 <SelectContent>
-                  {availableDepartments.map(department => (
+                  {availableDepartments.filter(dept => 
+                    dept.secretary_id === newUser.secretaryId || 
+                    dept.secretaryId === newUser.secretaryId
+                  ).map(department => (
                     <SelectItem key={department.id} value={department.id}>
                       {department.name}
                     </SelectItem>

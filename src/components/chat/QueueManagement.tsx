@@ -28,7 +28,7 @@ const QueueManagement: React.FC<QueueManagementProps> = ({
   
   // Calculate waiting time in minutes
   const getWaitingTime = (startTime: Date): number => {
-    const diffMs = new Date().getTime() - startTime.getTime();
+    const diffMs = new Date().getTime() - new Date(startTime).getTime();
     return Math.floor(diffMs / 60000); // Convert ms to minutes
   };
   
@@ -83,7 +83,7 @@ const QueueManagement: React.FC<QueueManagementProps> = ({
     const interval = setInterval(fetchQueue, 60000); // Refresh every minute
     
     return () => {
-      unsubscribe();
+      if (unsubscribe) unsubscribe();
       clearInterval(interval);
     };
   }, []);
@@ -102,6 +102,23 @@ const QueueManagement: React.FC<QueueManagementProps> = ({
     const nextInQueue = queue[0];
     
     try {
+      // Add system message about accepting the conversation
+      const { error: messageError } = await supabase
+        .from('messages')
+        .insert({
+          conversation_id: nextInQueue.conversationId,
+          content: `Atendente ${authState.user?.name || 'Agente'} aceitou o atendimento.`,
+          type: 'system',
+          sender_id: 'system',
+          sender_name: 'Sistema',
+          sender_role: 'system',
+          status: 'delivered'
+        });
+        
+      if (messageError) {
+        console.error('Error adding system message:', messageError);
+      }
+      
       // Update in database that agent accepts this conversation
       const { error } = await supabase
         .from('conversations')
@@ -185,7 +202,7 @@ const QueueManagement: React.FC<QueueManagementProps> = ({
                   </div>
                   <div className="text-sm text-muted-foreground mt-1 flex items-center">
                     <Clock className="h-3 w-3 mr-1" />
-                    {item.estimatedWaitTime} min de espera
+                    {getWaitingTime(item.waitingSince)} min de espera
                   </div>
                 </div>
               ))}

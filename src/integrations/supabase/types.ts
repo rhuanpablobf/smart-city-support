@@ -117,6 +117,7 @@ export type Database = {
       conversations: {
         Row: {
           agent_id: string | null
+          closed_at: string | null
           department_id: string | null
           id: string
           inactivity_warnings: number
@@ -131,6 +132,7 @@ export type Database = {
         }
         Insert: {
           agent_id?: string | null
+          closed_at?: string | null
           department_id?: string | null
           id?: string
           inactivity_warnings?: number
@@ -145,6 +147,7 @@ export type Database = {
         }
         Update: {
           agent_id?: string | null
+          closed_at?: string | null
           department_id?: string | null
           id?: string
           inactivity_warnings?: number

@@ -1,6 +1,7 @@
+
 import { User } from "./auth";
 
-export type MessageType = 'text' | 'file';
+export type MessageType = 'text' | 'file' | 'system';
 
 export interface Message {
   id: string;
@@ -44,4 +45,15 @@ export interface ChatOperationsProps {
   onSendFile: (file: File, conversationId?: string) => Promise<void>;
   onCloseConversation: (conversationId: string) => Promise<void>;
   onTransferConversation: (conversationId: string, targetAgentId: string, targetDepartmentId?: string) => Promise<void>;
+}
+
+export interface QueueItem {
+  conversationId: string;
+  userId: string;
+  userName: string;
+  departmentId?: string;
+  serviceId?: string;
+  waitingSince: Date;
+  position: number;
+  estimatedWaitTime?: number;
 }
