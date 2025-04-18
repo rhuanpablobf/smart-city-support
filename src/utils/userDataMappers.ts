@@ -19,5 +19,8 @@ export function mapSupabaseToUser(user: any): User {
     departmentId: user.department_id,
     departmentName: user.department_name,
     avatar: user.avatar || '/placeholder.svg',
+    createdAt: new Date(user.created_at || Date.now()),
+    updatedAt: new Date(user.updated_at || Date.now()),
+    active: true
   };
 }
