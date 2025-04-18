@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import {
   Card,
@@ -35,6 +34,8 @@ import { Button } from '@/components/ui/button';
 import UnitsHeader from '@/components/units/UnitsHeader';
 import UnitsLoadingError from '@/components/units/UnitsLoadingError';
 import SecretaryActions from '@/components/units/SecretaryActions';
+import DepartmentActions from '@/components/units/DepartmentActions';
+import ServiceCard from '@/components/units/ServiceCard';
 import AddSecretaryDialog from '@/components/units/AddSecretaryDialog';
 import AddDepartmentDialog from '@/components/units/AddDepartmentDialog';
 import AddServiceDialog from '@/components/units/AddServiceDialog';
@@ -243,38 +244,12 @@ const UnitsManagement: React.FC = () => {
                                 <AccordionTrigger className="hover:bg-gray-50 px-4 rounded-md">
                                   <div className="flex items-center justify-between w-full pr-4">
                                     <div className="font-medium">{department.name}</div>
-                                    <div className="flex items-center space-x-2" onClick={(e) => e.stopPropagation()}>
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => handleEditDepartment({
-                                          id: department.id, 
-                                          name: department.name,
-                                          secretary_id: department.secretary_id
-                                        })}
-                                      >
-                                        <Pencil className="h-4 w-4" />
-                                      </Button>
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => handleDeleteDepartment(department.id, department.name)}
-                                        className="text-red-500 hover:text-red-700"
-                                      >
-                                        <Trash2 className="h-4 w-4" />
-                                      </Button>
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleAddService(department.id);
-                                        }}
-                                      >
-                                        <Plus className="h-3 w-3 mr-1" />
-                                        Adicionar Serviço
-                                      </Button>
-                                    </div>
+                                    <DepartmentActions
+                                      department={department}
+                                      onEdit={handleEditDepartment}
+                                      onDelete={handleDeleteDepartment}
+                                      onAddService={handleAddService}
+                                    />
                                   </div>
                                 </AccordionTrigger>
                                 
@@ -285,42 +260,13 @@ const UnitsManagement: React.FC = () => {
                                     ) : (
                                       <ul className="space-y-4">
                                         {department.services.map((service) => (
-                                          <li key={service.id} className="p-3 bg-gray-50 rounded-md">
-                                            <div className="flex items-center justify-between mb-2">
-                                              <h4 className="font-medium">{service.name}</h4>
-                                              <div className="flex space-x-2">
-                                                <Button
-                                                  variant="ghost"
-                                                  size="sm"
-                                                  onClick={() => handleEditService({
-                                                    id: service.id, 
-                                                    name: service.name,
-                                                    description: service.description
-                                                  })}
-                                                >
-                                                  <Pencil className="h-4 w-4" />
-                                                </Button>
-                                                <Button
-                                                  variant="ghost"
-                                                  size="sm"
-                                                  onClick={() => handleDeleteService(service.id, service.name)}
-                                                  className="text-red-500 hover:text-red-700"
-                                                >
-                                                  <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                              </div>
-                                            </div>
-                                            
-                                            {service.description && (
-                                              <p className="text-sm text-gray-600 mb-2">{service.description}</p>
-                                            )}
-                                            
-                                            <QuestionAnswersList 
-                                              serviceId={service.id} 
-                                              initialQuestions={service.questionsAnswers}
-                                              onSuccess={onSuccess}
-                                            />
-                                          </li>
+                                          <ServiceCard
+                                            key={service.id}
+                                            service={service}
+                                            onEdit={handleEditService}
+                                            onDelete={handleDeleteService}
+                                            onSuccess={onSuccess}
+                                          />
                                         ))}
                                       </ul>
                                     )}
