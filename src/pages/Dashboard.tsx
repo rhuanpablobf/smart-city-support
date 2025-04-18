@@ -142,7 +142,7 @@ const Dashboard = () => {
                 onSelectConversation={handleSelectConversation}
                 onStartNewConversation={handleStartConversation}
                 selectedConversationId={currentConversation?.id}
-                loading={loading}
+                isLoading={loading}
                 className="h-4/5 border-b"
               />
               {isAgent && (

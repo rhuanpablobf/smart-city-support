@@ -1,3 +1,4 @@
+
 import { User } from '@/types/auth';
 import { Conversation, Message } from '@/types/chat';
 
@@ -75,12 +76,8 @@ export const mockAgents: User[] = [
 export const mockConversations: Conversation[] = [
   {
     id: 'conv1',
-    name: 'Atendimento #1',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    lastMessageAt: new Date(),
-    messages: [],
     userId: 'user1',
+    userName: 'Atendimento #1',
     agentId: 'agent1',
     status: 'active',
     priority: 'medium',
@@ -89,34 +86,34 @@ export const mockConversations: Conversation[] = [
     cpf: '12345678900',
     secretaryId: 'sec1',
     serviceId: 'serv1',
-    isPublic: false
+    isPublic: false,
+    isBot: false,
+    messages: [],
+    timestamp: new Date(),
+    lastMessageTime: new Date()
   },
   {
     id: 'conv2',
-    name: 'Atendimento #2',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    lastMessageAt: new Date(),
-    messages: [],
     userId: 'user2',
+    userName: 'Atendimento #2',
     agentId: 'agent2',
-    status: 'pending',
+    status: 'active',
     priority: 'high',
     channel: 'whatsapp',
     transcript: '...',
     cpf: '98765432100',
     secretaryId: 'sec2',
     serviceId: 'serv2',
-    isPublic: false
+    isPublic: false,
+    isBot: false,
+    messages: [],
+    timestamp: new Date(),
+    lastMessageTime: new Date()
   },
   {
     id: 'conv3',
-    name: 'Atendimento #3',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    lastMessageAt: new Date(),
-    messages: [],
     userId: 'user3',
+    userName: 'Atendimento #3',
     agentId: 'agent3',
     status: 'closed',
     priority: 'low',
@@ -125,7 +122,11 @@ export const mockConversations: Conversation[] = [
     cpf: '45678912300',
     secretaryId: 'sec1',
     serviceId: 'serv3',
-    isPublic: false
+    isPublic: false,
+    isBot: false,
+    messages: [],
+    timestamp: new Date(),
+    lastMessageTime: new Date()
   }
 ];
 
@@ -133,34 +134,34 @@ export const mockMessages: Message[] = [
   {
     id: 'msg1',
     content: 'Olá, preciso de ajuda com IPTU',
-    createdAt: new Date(),
     conversationId: 'conv1',
     senderId: 'user1',
     senderName: 'Cliente',
     type: 'text',
     status: 'sent',
-    fileUrl: null
+    fileUrl: null,
+    timestamp: new Date()
   },
   {
     id: 'msg2',
     content: 'Claro, posso ajudar com isso',
-    createdAt: new Date(),
     conversationId: 'conv1',
     senderId: 'agent1',
     senderName: 'Atendente',
     type: 'text',
     status: 'sent',
-    fileUrl: null
+    fileUrl: null,
+    timestamp: new Date()
   },
   {
     id: 'msg3',
     content: 'Qual o número do seu contribuinte?',
-    createdAt: new Date(),
     conversationId: 'conv1',
     senderId: 'agent1',
     senderName: 'Atendente',
     type: 'text',
     status: 'sent',
-    fileUrl: null
+    fileUrl: null,
+    timestamp: new Date()
   }
 ];
