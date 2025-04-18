@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Card,
   CardContent,
@@ -7,7 +6,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { 
   Plus, 
   Loader2, 
@@ -18,7 +16,6 @@ import {
   Trash2,
   MessageSquarePlus
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
 import { 
   SecretaryWithDepartments, 
   Department,
@@ -31,6 +28,11 @@ import {
 } from '@/services/units';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { toast } from 'sonner';
+
+// Component imports
+import UnitsHeader from '@/components/units/UnitsHeader';
+import UnitsLoadingError from '@/components/units/UnitsLoadingError';
+import SecretaryActions from '@/components/units/SecretaryActions';
 import AddSecretaryDialog from '@/components/units/AddSecretaryDialog';
 import AddDepartmentDialog from '@/components/units/AddDepartmentDialog';
 import AddServiceDialog from '@/components/units/AddServiceDialog';
@@ -181,27 +183,11 @@ const UnitsManagement: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-6">
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold mb-1">Gestão de Unidades e Serviços</h1>
-          <p className="text-gray-500">
-            Gerencie secretarias, unidades e serviços no sistema
-          </p>
-        </div>
-
-        <div className="mt-4 md:mt-0 flex flex-wrap gap-2">
-          {loadError && (
-            <Button variant="outline" onClick={loadData} className="mr-2">
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Tentar novamente
-            </Button>
-          )}
-          <Button onClick={() => setIsAddSecretaryOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Nova Secretaria
-          </Button>
-        </div>
-      </div>
+      <UnitsHeader 
+        loadError={loadError}
+        onRefresh={loadData}
+        onAddSecretary={() => setIsAddSecretaryOpen(true)}
+      />
 
       <Card>
         <CardHeader>
@@ -211,20 +197,13 @@ const UnitsManagement: React.FC = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
-            <div className="flex items-center justify-center p-8">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <span className="ml-2">Carregando estrutura organizacional...</span>
-            </div>
-          ) : loadError ? (
-            <div className="flex items-center justify-center p-8 text-red-500">
-              <AlertCircle className="h-6 w-6 mr-2" />
-              <span>{loadError}</span>
-              <Button variant="outline" size="sm" className="ml-4" onClick={loadData}>
-                Tentar novamente
-              </Button>
-            </div>
-          ) : (
+          <UnitsLoadingError 
+            isLoading={isLoading}
+            loadError={loadError}
+            onRefresh={loadData}
+          />
+
+          {!isLoading && !loadError && (
             <Accordion 
               type="multiple" 
               className="w-full"
@@ -237,34 +216,12 @@ const UnitsManagement: React.FC = () => {
                     <AccordionTrigger className="hover:bg-gray-50 px-4 rounded-md">
                       <div className="flex items-center justify-between w-full pr-4">
                         <div className="font-medium">{secretary.name}</div>
-                        <div className="flex items-center space-x-2" onClick={(e) => e.stopPropagation()}>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEditSecretary({id: secretary.id, name: secretary.name})}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteSecretary(secretary.id, secretary.name)}
-                            className="text-red-500 hover:text-red-700"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleAddDepartment(secretary.id);
-                            }}
-                          >
-                            <Plus className="h-3 w-3 mr-1" />
-                            Adicionar Unidade
-                          </Button>
-                        </div>
+                        <SecretaryActions 
+                          secretary={secretary}
+                          onEdit={handleEditSecretary}
+                          onDelete={handleDeleteSecretary}
+                          onAddDepartment={handleAddDepartment}
+                        />
                       </div>
                     </AccordionTrigger>
                     
