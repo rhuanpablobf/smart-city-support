@@ -28,6 +28,9 @@ const MOCK_USERS = [
     secretaryName: null,
     departmentId: null,
     departmentName: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    active: true,
   },
   {
     id: '2',
@@ -42,6 +45,9 @@ const MOCK_USERS = [
     secretaryName: 'Secretaria de Saúde',
     departmentId: null,
     departmentName: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    active: true,
   },
   {
     id: '3',
@@ -56,6 +62,9 @@ const MOCK_USERS = [
     secretaryName: 'Secretaria de Saúde',
     departmentId: 'dep1',
     departmentName: 'Departamento de Consultas',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    active: true,
   },
   {
     id: '4',
@@ -70,6 +79,27 @@ const MOCK_USERS = [
     secretaryName: 'Secretaria de Saúde',
     departmentId: 'dep1',
     departmentName: 'Departamento de Consultas',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    active: true,
+  },
+  // Add an agent for SEFAZ department
+  {
+    id: '5',
+    name: 'Atendente SEFAZ',
+    email: 'sefaz.agent@example.com',
+    role: 'agent' as UserRole,
+    avatar: '/placeholder.svg',
+    isOnline: true,
+    status: 'online' as const,
+    maxConcurrentChats: 5,
+    secretaryId: '1c400845-366a-481f-a8b2-b9e43784c87b', // SEFAZ ID from the console logs
+    secretaryName: 'SEFAZ',
+    departmentId: null, // Will be assigned when departments are available
+    departmentName: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    active: true,
   },
 ];
 
@@ -127,10 +157,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       let initialStatus = user.role === 'admin' ? 'offline' : 'online';
       let initialIsOnline = user.role !== 'admin';
       
-      const updatedUser = {
+      const updatedUser: User = {
         ...user,
         status: initialStatus as 'online' | 'offline' | 'break',
-        isOnline: initialIsOnline
+        isOnline: initialIsOnline,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+        active: true,
       };
       
       // Store user in localStorage

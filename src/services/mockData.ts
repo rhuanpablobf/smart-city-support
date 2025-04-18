@@ -1,172 +1,166 @@
+import { User } from '@/types/auth';
+import { Conversation, Message } from '@/types/chat';
 
-// This file is kept for reference but no longer used
-// Data is now fetched directly from Supabase
-
-import { BotFlow } from '@/types/chat';
-import { AgentPerformance, DepartmentStats, ServiceStats, SatisfactionSurvey } from '@/types/reports';
-import { User, UserRole } from '@/types/auth';
-
-// Mock Bot Flow for CPF + Department selection
-export const initialBotFlow: BotFlow = {
-  id: 'initialFlow',
-  nodes: [
-    {
-      id: 'welcome',
-      type: 'message',
-      data: {
-        text: 'Olá! Bem-vindo ao atendimento da prefeitura. Como posso ajudar?'
-      },
-      position: { x: 0, y: 0 }
-    },
-    {
-      id: 'cpf',
-      type: 'input',
-      data: {
-        text: 'Por favor, informe seu CPF para iniciarmos o atendimento:',
-        inputType: 'cpf',
-        validation: '^[0-9]{11}$'
-      },
-      position: { x: 0, y: 100 }
-    },
-    {
-      id: 'department',
-      type: 'options',
-      data: {
-        text: 'Qual secretaria você deseja contatar?',
-        options: [] // This will be filled from Supabase data
-      },
-      position: { x: 0, y: 200 }
-    }
-  ],
-  edges: [
-    { id: 'e1', source: 'welcome', target: 'cpf' },
-    { id: 'e2', source: 'cpf', target: 'department' }
-  ]
-};
-
-// Mock Users
 export const mockAgents: User[] = [
   {
     id: 'agent1',
-    name: 'Carlos Silva',
-    email: 'carlos@example.com',
+    name: 'João Silva',
+    email: 'joao@prefeitura.gov.br',
     role: 'agent',
     avatar: '/placeholder.svg',
     isOnline: true,
     status: 'online',
-    maxConcurrentChats: 3
+    maxConcurrentChats: 3,
+    secretaryId: 'sec1',
+    secretaryName: 'Secretaria de Saúde',
+    departmentId: 'dep1',
+    departmentName: 'Atendimento',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    active: true
   },
   {
     id: 'agent2',
-    name: 'Ana Paula',
-    email: 'ana@example.com',
+    name: 'Maria Souza',
+    email: 'maria@prefeitura.gov.br',
     role: 'agent',
     avatar: '/placeholder.svg',
     isOnline: true,
     status: 'online',
-    maxConcurrentChats: 5
+    maxConcurrentChats: 5,
+    secretaryId: 'sec2',
+    secretaryName: 'Secretaria de Educação',
+    departmentId: 'dep2',
+    departmentName: 'Matrículas',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    active: true
   },
   {
     id: 'agent3',
-    name: 'Roberto Gomes',
-    email: 'roberto@example.com',
+    name: 'Roberto Lima',
+    email: 'roberto@prefeitura.gov.br',
     role: 'agent',
     avatar: '/placeholder.svg',
     isOnline: false,
     status: 'offline',
-    maxConcurrentChats: 4
+    maxConcurrentChats: 4,
+    secretaryId: 'sec1',
+    secretaryName: 'Secretaria de Saúde',
+    departmentId: 'dep3',
+    departmentName: 'Agendamentos',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    active: true
+  },
+  {
+    id: 'agent4', 
+    name: 'Carlos Santos',
+    email: 'carlos@prefeitura.gov.br',
+    role: 'agent',
+    avatar: '/placeholder.svg',
+    isOnline: true,
+    status: 'online',
+    maxConcurrentChats: 4,
+    secretaryId: '1c400845-366a-481f-a8b2-b9e43784c87b', // SEFAZ ID from console logs
+    secretaryName: 'SEFAZ',
+    departmentId: 'iptu-dep',
+    departmentName: 'IPTU',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    active: true
   }
 ];
 
-// Mock Reports Data - These would also be fetched from Supabase in a real app
-export const mockAgentPerformance: AgentPerformance[] = [
+export const mockConversations: Conversation[] = [
   {
-    agentId: 'agent1',
-    agentName: 'Carlos Silva',
-    totalConversations: 42,
-    avgResponseTime: 45, // seconds
-    avgHandlingTime: 480, // seconds
-    satisfactionRate: 4.7, // out of 5
-    transferRate: 0.05 // 5%
-  },
-  {
-    agentId: 'agent2',
-    agentName: 'Ana Paula',
-    totalConversations: 38,
-    avgResponseTime: 32, // seconds
-    avgHandlingTime: 520, // seconds
-    satisfactionRate: 4.8, // out of 5
-    transferRate: 0.08 // 8%
-  }
-];
-
-// Define mock department stats for use in reports
-export const mockDepartmentStats: DepartmentStats[] = [
-  {
-    departmentId: 'dept1',
-    departmentName: 'Secretaria de Saúde',
-    totalConversations: 156,
-    botResolutionRate: 0.65, // 65%
-    avgWaitTime: 210, // seconds
-    satisfactionRate: 4.3 // out of 5
-  },
-  {
-    departmentId: 'dept2',
-    departmentName: 'Secretaria de Educação',
-    totalConversations: 98,
-    botResolutionRate: 0.48, // 48%
-    avgWaitTime: 180, // seconds
-    satisfactionRate: 4.5 // out of 5
-  },
-  {
-    departmentId: 'dept3',
-    departmentName: 'Secretaria de Finanças',
-    totalConversations: 124,
-    botResolutionRate: 0.72, // 72%
-    avgWaitTime: 150, // seconds
-    satisfactionRate: 4.2 // out of 5
-  }
-];
-
-export const mockServiceStats: ServiceStats[] = [
-  {
-    serviceId: 'serv1',
-    serviceName: 'Agendamento de Consultas',
-    departmentId: 'dept1',
-    departmentName: 'Secretaria de Saúde',
-    totalConversations: 92,
-    botResolutionRate: 0.45, // 45%
-    avgHandlingTime: 420, // seconds
-    satisfactionRate: 4.4 // out of 5
-  },
-  {
-    serviceId: 'serv5',
-    serviceName: 'IPTU',
-    departmentId: 'dept3',
-    departmentName: 'Secretaria de Finanças',
-    totalConversations: 78,
-    botResolutionRate: 0.82, // 82%
-    avgHandlingTime: 240, // seconds
-    satisfactionRate: 4.6 // out of 5
-  }
-];
-
-export const mockSatisfactionSurveys: SatisfactionSurvey[] = [
-  {
-    conversationId: 'conv1',
+    id: 'conv1',
+    name: 'Atendimento #1',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    lastMessageAt: new Date(),
+    messages: [],
     userId: 'user1',
     agentId: 'agent1',
-    rating: 5,
-    comments: 'Excelente atendimento! Muito útil.',
-    botOnly: false,
-    timestamp: new Date(Date.now() - 3000000) // 50 minutes ago
+    status: 'active',
+    priority: 'medium',
+    channel: 'web',
+    transcript: '...',
+    cpf: '12345678900',
+    secretaryId: 'sec1',
+    serviceId: 'serv1',
+    isPublic: false
   },
   {
-    conversationId: 'conv4',
-    userId: 'user4',
-    rating: 4,
-    comments: 'O bot resolveu meu problema rápido',
-    botOnly: true,
-    timestamp: new Date(Date.now() - 3600000) // 1 hour ago
+    id: 'conv2',
+    name: 'Atendimento #2',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    lastMessageAt: new Date(),
+    messages: [],
+    userId: 'user2',
+    agentId: 'agent2',
+    status: 'pending',
+    priority: 'high',
+    channel: 'whatsapp',
+    transcript: '...',
+    cpf: '98765432100',
+    secretaryId: 'sec2',
+    serviceId: 'serv2',
+    isPublic: false
+  },
+  {
+    id: 'conv3',
+    name: 'Atendimento #3',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    lastMessageAt: new Date(),
+    messages: [],
+    userId: 'user3',
+    agentId: 'agent3',
+    status: 'closed',
+    priority: 'low',
+    channel: 'email',
+    transcript: '...',
+    cpf: '45678912300',
+    secretaryId: 'sec1',
+    serviceId: 'serv3',
+    isPublic: false
+  }
+];
+
+export const mockMessages: Message[] = [
+  {
+    id: 'msg1',
+    content: 'Olá, preciso de ajuda com IPTU',
+    createdAt: new Date(),
+    conversationId: 'conv1',
+    senderId: 'user1',
+    senderName: 'Cliente',
+    type: 'text',
+    status: 'sent',
+    fileUrl: null
+  },
+  {
+    id: 'msg2',
+    content: 'Claro, posso ajudar com isso',
+    createdAt: new Date(),
+    conversationId: 'conv1',
+    senderId: 'agent1',
+    senderName: 'Atendente',
+    type: 'text',
+    status: 'sent',
+    fileUrl: null
+  },
+  {
+    id: 'msg3',
+    content: 'Qual o número do seu contribuinte?',
+    createdAt: new Date(),
+    conversationId: 'conv1',
+    senderId: 'agent1',
+    senderName: 'Atendente',
+    type: 'text',
+    status: 'sent',
+    fileUrl: null
   }
 ];

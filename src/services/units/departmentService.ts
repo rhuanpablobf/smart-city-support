@@ -1,7 +1,7 @@
 
 import { supabase } from '@/services/base/supabaseBase';
 import { toast } from 'sonner';
-import { Department } from '@/services/units/types';
+import { configureRLSPolicies } from '@/utils/applyRLSPolicies';
 
 export const fetchDepartmentsBySecretary = async (secretaryId: string) => {
   try {
@@ -16,10 +16,7 @@ export const fetchDepartmentsBySecretary = async (secretaryId: string) => {
       throw error;
     }
     
-    return (data || []).map((dept: any) => ({
-      ...dept,
-      secretaryId: dept.secretary_id
-    }));
+    return data || [];
   } catch (error) {
     console.error('Error fetching departments:', error);
     toast.error('Erro ao carregar departamentos');
@@ -29,6 +26,9 @@ export const fetchDepartmentsBySecretary = async (secretaryId: string) => {
 
 export const addDepartment = async (name: string, secretaryId: string) => {
   try {
+    // Try to execute the policy configuration function first
+    await configureRLSPolicies();
+    
     const { data, error } = await supabase
       .from('departments')
       .insert({ 
@@ -46,7 +46,7 @@ export const addDepartment = async (name: string, secretaryId: string) => {
     return data && data.length > 0 ? data[0] : null;
   } catch (error) {
     console.error('Error adding department:', error);
-    toast.error('Erro ao adicionar unidade');
+    toast.error('Erro ao adicionar unidade. Verifique se o administrador configurou as políticas RLS.');
     return null;
   }
 };

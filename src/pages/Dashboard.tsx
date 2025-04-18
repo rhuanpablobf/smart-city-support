@@ -1,10 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import ChatWindow from '@/components/chat/ChatWindow';
 import ConversationList from '@/components/chat/ConversationList';
 import { Conversation } from '@/types/chat';
-import { fetchConversations, createConversation, subscribeToConversations } from '@/services/conversationService';
-import { sendMessage, subscribeToMessages } from '@/services/messageService';
+import { fetchConversations, createConversation } from '@/services/conversationService';
+import { sendMessage } from '@/services/messageService';
 import ChatInterface from '@/components/chat/ChatInterface';
 import QueueManagement from '@/components/chat/QueueManagement';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -50,74 +51,15 @@ const Dashboard = () => {
 
     loadConversations();
 
-    // Subscribe to conversation updates
-    const unsubscribe = subscribeToConversations((updatedConversation) => {
-      setConversations(prev => {
-        // Check if the conversation is new
-        const existing = prev.find(c => c.id === updatedConversation.id);
-        
-        if (!existing) {
-          return [...prev, updatedConversation as Conversation];
-        }
-        
-        // Update existing conversation
-        return prev.map(c => 
-          c.id === updatedConversation.id ? { ...c, ...updatedConversation } : c
-        );
-      });
-      
-      // If we're viewing this conversation, update it
-      if (currentConversation?.id === updatedConversation.id) {
-        setCurrentConversation(prev => ({ ...prev!, ...updatedConversation }));
-      }
-    });
+    // Set up periodic refresh for conversations
+    const interval = setInterval(() => {
+      loadConversations();
+    }, 10000); // Refresh every 10 seconds
 
     return () => {
-      unsubscribe();
+      clearInterval(interval);
     };
   }, [authState.isAuthenticated, currentConversation?.id]);
-
-  // Subscribe to messages for the current conversation
-  useEffect(() => {
-    if (!currentConversation) return;
-
-    const unsubscribe = subscribeToMessages(currentConversation.id, (newMessage) => {
-      setCurrentConversation(prev => {
-        if (!prev) return prev;
-        
-        // Add new message if it doesn't exist
-        const messageExists = prev.messages.some(m => m.id === newMessage.id);
-        if (!messageExists) {
-          return {
-            ...prev,
-            messages: [...prev.messages, newMessage],
-            lastMessageAt: new Date()
-          };
-        }
-        
-        return prev;
-      });
-      
-      // Also update in the conversations list
-      setConversations(prev => prev.map(c => {
-        if (c.id === currentConversation.id) {
-          const messageExists = c.messages.some(m => m.id === newMessage.id);
-          if (!messageExists) {
-            return {
-              ...c,
-              messages: [...c.messages, newMessage],
-              lastMessageAt: new Date()
-            };
-          }
-        }
-        return c;
-      }));
-    });
-
-    return () => {
-      unsubscribe();
-    };
-  }, [currentConversation]);
 
   const handleSendMessage = async (messageContent: string, conversationId?: string) => {
     if (!conversationId && !currentConversation) {
@@ -198,7 +140,7 @@ const Dashboard = () => {
               <ConversationList
                 conversations={conversations}
                 onSelectConversation={handleSelectConversation}
-                onStartConversation={handleStartConversation}
+                onStartNewConversation={handleStartConversation}
                 selectedConversationId={currentConversation?.id}
                 loading={loading}
                 className="h-4/5 border-b"
