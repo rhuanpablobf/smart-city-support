@@ -4,6 +4,7 @@ import { User } from '@/types/auth';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ChatOperations from './ChatOperations';
 import ConversationAudit from '@/components/audit/ConversationAudit';
+import ChatInterface from './ChatInterface';
 
 interface DashboardContentProps {
   chatOperationsProps: React.ComponentProps<typeof ChatOperations>;

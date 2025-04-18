@@ -3,7 +3,8 @@ import { supabase } from '@/services/base/supabaseBase';
 
 export async function configureRLSPolicies() {
   try {
-    const { error } = await supabase.rpc('fix_department_permissions', {});
+    // Fix the type error by calling the RPC function without parameters
+    const { error } = await supabase.rpc('fix_department_permissions');
     
     if (error) {
       console.error('Error fixing permissions:', error);
