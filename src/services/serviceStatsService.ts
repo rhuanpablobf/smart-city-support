@@ -17,9 +17,9 @@ export const fetchServiceStats = async (): Promise<ServiceStats[]> => {
 
     // Transform the data to match our ServiceStats type
     return data.map((stat: any) => ({
-      serviceId: stat.service_id,
+      serviceId: stat.service_id || null,
       serviceName: stat.service_name,
-      departmentId: stat.department_id,
+      departmentId: stat.department_id || null,
       departmentName: stat.department_name,
       totalConversations: stat.total_conversations,
       botResolutionRate: stat.bot_resolution_rate,
