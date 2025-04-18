@@ -11,6 +11,7 @@ import QueueManagement from '@/components/chat/QueueManagement';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ConversationAudit from '@/components/audit/ConversationAudit';
 import { UserRole } from '@/types/auth';
+import { toast } from 'sonner';
 
 const Dashboard = () => {
   const { authState } = useAuth();
@@ -117,6 +118,60 @@ const Dashboard = () => {
       console.error('Error starting conversation:', error);
     }
   };
+  
+  const handleCloseConversation = async (conversationId: string) => {
+    // In a real app, this would call the API to close the conversation
+    setConversations(prev => 
+      prev.map(conv => 
+        conv.id === conversationId ? { ...conv, status: 'closed' } : conv
+      )
+    );
+    
+    if (currentConversation?.id === conversationId) {
+      setCurrentConversation(prev => 
+        prev ? { ...prev, status: 'closed' } : undefined
+      );
+    }
+    
+    toast.success('Conversa encerrada com sucesso');
+  };
+  
+  const handleTransferConversation = async (
+    conversationId: string, 
+    targetAgentId: string, 
+    targetDepartmentId?: string
+  ) => {
+    // In a real app, this would call the API to transfer the conversation
+    if (targetAgentId) {
+      // Transfer to agent
+      setConversations(prev => 
+        prev.map(conv => 
+          conv.id === conversationId ? { ...conv, agentId: targetAgentId } : conv
+        )
+      );
+      
+      if (currentConversation?.id === conversationId) {
+        setCurrentConversation(undefined);
+      }
+      
+      toast.success('Conversa transferida para outro atendente');
+    } else if (targetDepartmentId) {
+      // Transfer to department (waiting queue)
+      setConversations(prev => 
+        prev.map(conv => 
+          conv.id === conversationId ? 
+          { ...conv, agentId: undefined, status: 'waiting', department: targetDepartmentId } : 
+          conv
+        )
+      );
+      
+      if (currentConversation?.id === conversationId) {
+        setCurrentConversation(undefined);
+      }
+      
+      toast.success('Conversa transferida para outro departamento');
+    }
+  };
 
   const renderDashboardContent = () => {
     if (isUser) {
@@ -140,13 +195,12 @@ const Dashboard = () => {
               <ConversationList
                 conversations={conversations}
                 onSelectConversation={handleSelectConversation}
-                onStartNewConversation={handleStartConversation}
+                onStartNewConversation={isAdmin ? handleStartConversation : undefined}
                 selectedConversationId={currentConversation?.id}
                 isLoading={loading}
-                className="h-4/5 border-b"
               />
               {isAgent && (
-                <div className="p-2 overflow-y-auto h-1/5">
+                <div className="p-2 overflow-y-auto">
                   <QueueManagement 
                     onSelectConversation={(convId) => {
                       const conversation = conversations.find(c => c.id === convId);
@@ -164,6 +218,8 @@ const Dashboard = () => {
                 currentUser={authState.user}
                 onSendMessage={handleSendMessage}
                 onSendFile={handleSendFile}
+                onCloseConversation={handleCloseConversation}
+                onTransferConversation={handleTransferConversation}
                 showBackButton={true}
                 onBackClick={() => setCurrentConversation(undefined)}
               />

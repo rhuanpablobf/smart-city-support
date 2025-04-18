@@ -3,6 +3,7 @@ import React, { useEffect, useRef } from 'react';
 import ChatBubble from './ChatBubble';
 import ChatInput from './ChatInput';
 import ChatHeader from './ChatHeader';
+import ConversationActions from './ConversationActions';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Conversation, Message } from '@/types/chat';
 import { User } from '@/types/auth';
@@ -14,9 +15,11 @@ interface ChatWindowProps {
   onSendMessage: (message: string, conversationId?: string) => void;
   onSendFile?: (file: File, conversationId?: string) => void;
   onBackClick?: () => void;
+  onCloseConversation?: (conversationId: string) => void;
+  onTransferConversation?: (conversationId: string, targetAgentId: string, targetDepartmentId?: string) => void;
   loading?: boolean;
   showBackButton?: boolean;
-  chatControls?: React.ReactNode; // New prop for custom chat controls
+  chatControls?: React.ReactNode;
 }
 
 const ChatWindow: React.FC<ChatWindowProps> = ({
@@ -25,9 +28,11 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   onSendMessage,
   onSendFile,
   onBackClick,
+  onCloseConversation,
+  onTransferConversation,
   loading = false,
   showBackButton = false,
-  chatControls // New prop
+  chatControls
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -49,9 +54,24 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     }
   };
 
+  const handleCloseConversation = (conversationId: string) => {
+    if (onCloseConversation) {
+      onCloseConversation(conversationId);
+    }
+  };
+
+  const handleTransferConversation = (conversationId: string, targetAgentId: string, targetDepartmentId?: string) => {
+    if (onTransferConversation) {
+      onTransferConversation(conversationId, targetAgentId, targetDepartmentId);
+    }
+  };
+
   const isCurrentUser = (message: Message) => {
     return currentUser ? message.senderId === currentUser.id : false;
   };
+
+  // Check if current user is an agent
+  const isAgent = currentUser?.role === 'agent' || currentUser?.role === 'manager';
 
   return (
     <div className="flex flex-col h-full">
@@ -96,6 +116,16 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
           </>
         )}
       </div>
+      
+      {/* Show ConversationActions for agents only and only if there's an active conversation */}
+      {isAgent && conversation && conversation.status === 'active' && onCloseConversation && onTransferConversation && (
+        <ConversationActions
+          conversation={conversation}
+          onCloseConversation={handleCloseConversation}
+          onTransferConversation={handleTransferConversation}
+          currentUser={currentUser}
+        />
+      )}
       
       {/* Custom chat controls */}
       {chatControls}

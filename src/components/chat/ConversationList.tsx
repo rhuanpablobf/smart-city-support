@@ -16,6 +16,7 @@ interface ConversationListProps {
   onSelectConversation: (conversation: Conversation) => void;
   onStartNewConversation?: () => void;
   isLoading?: boolean;
+  className?: string;
 }
 
 const ConversationList: React.FC<ConversationListProps> = ({
@@ -23,7 +24,8 @@ const ConversationList: React.FC<ConversationListProps> = ({
   selectedConversationId,
   onSelectConversation,
   onStartNewConversation,
-  isLoading = false
+  isLoading = false,
+  className
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -56,7 +58,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
   };
 
   return (
-    <div className="h-full flex flex-col bg-white border-r">
+    <div className={`h-full flex flex-col bg-white border-r ${className || ''}`}>
       <div className="p-3 border-b">
         <h2 className="font-medium text-lg mb-2">Conversas</h2>
         <div className="relative mb-2">

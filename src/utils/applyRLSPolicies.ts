@@ -1,5 +1,5 @@
 
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/services/base/supabaseBase';
 
 /**
  * This utility function configures RLS (Row Level Security) policies for departments
@@ -9,23 +9,16 @@ import { supabase } from '@/integrations/supabase/client';
  */
 export async function configureRLSPolicies() {
   try {
-    // Check if we can add a department (test query)
-    const { data, error } = await supabase
-      .from('departments')
-      .select('id')
-      .limit(1);
+    // Execute SQL to fix permissions via supabase API
+    const { error } = await supabase.rpc('fix_department_permissions');
     
     if (error) {
-      console.error('Error checking departments table:', error);
+      console.error('Error fixing permissions:', error);
+      return false;
     }
     
-    // Instructions for manual setup if needed
-    console.info('If you are experiencing permission issues with departments:');
-    console.info('1. Go to the Supabase dashboard');
-    console.info('2. Open the SQL Editor');
-    console.info('3. Run the SQL from src/sql/fix-permissions.sql');
-    
-    return !!data;
+    console.info('Permissions successfully configured');
+    return true;
   } catch (error) {
     console.error('Error configuring RLS policies:', error);
     return false;
