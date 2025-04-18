@@ -277,18 +277,29 @@ export type Database = {
           created_at: string | null
           id: string
           name: string
+          secretary_id: string | null
         }
         Insert: {
           created_at?: string | null
           id?: string
           name: string
+          secretary_id?: string | null
         }
         Update: {
           created_at?: string | null
           id?: string
           name?: string
+          secretary_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "departments_secretary_id_fkey"
+            columns: ["secretary_id"]
+            isOneToOne: false
+            referencedRelation: "secretaries"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       kpi_data: {
         Row: {
