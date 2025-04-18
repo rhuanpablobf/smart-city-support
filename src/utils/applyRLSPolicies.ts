@@ -3,7 +3,7 @@ import { supabase } from '@/services/base/supabaseBase';
 
 export async function configureRLSPolicies() {
   try {
-    // Fix the type error by calling the RPC function without parameters
+    // Call the RPC function properly without any parameters
     const { error } = await supabase.rpc('fix_department_permissions');
     
     if (error) {

@@ -4,9 +4,24 @@ import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { MessageSquareText, ArrowRight } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Contact: React.FC = () => {
   const navigate = useNavigate();
+  const { authState } = useAuth();
+  
+  // Direct users to the appropriate location based on role
+  const handleStartChat = () => {
+    // If agent or admin, direct to dashboard, otherwise to chat
+    if (authState.user && (authState.user.role === 'agent' || 
+                          authState.user.role === 'manager' || 
+                          authState.user.role === 'admin' || 
+                          authState.user.role === 'secretary_admin')) {
+      navigate('/dashboard');
+    } else {
+      navigate('/chat');
+    }
+  };
 
   return (
     <div className="container mx-auto px-4 py-12 flex flex-col items-center">
@@ -31,7 +46,7 @@ const Contact: React.FC = () => {
           <CardFooter>
             <Button 
               className="w-full" 
-              onClick={() => navigate('/chat')}
+              onClick={handleStartChat}
             >
               Iniciar Chat <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
@@ -51,7 +66,7 @@ const Contact: React.FC = () => {
             <Button 
               className="w-full"
               variant="outline"
-              onClick={() => navigate('/chat')}
+              onClick={handleStartChat}
             >
               Acessar Serviços <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
@@ -70,7 +85,7 @@ const Contact: React.FC = () => {
             <Button 
               className="w-full"
               variant="outline"
-              onClick={() => navigate('/chat')}
+              onClick={handleStartChat}
             >
               Fazer Solicitação <ArrowRight className="ml-2 h-4 w-4" />
             </Button>

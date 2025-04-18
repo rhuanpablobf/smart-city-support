@@ -3,12 +3,12 @@ import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { User, Clock, UserCheck } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/contexts/AuthContext';
 import { QueueItem } from '@/types/chat';
 import { subscribeToConversations } from '@/services/conversationService';
 import { toast } from 'sonner';
+import { supabase } from '@/services/base/supabaseBase';
 
 interface QueueManagementProps {
   onSelectConversation: (conversationId: string) => void;
@@ -26,47 +26,69 @@ const QueueManagement: React.FC<QueueManagementProps> = ({
   // Maximum number of concurrent chats this attendant can handle
   const maxConcurrentChats = authState.user?.maxConcurrentChats || 5;
   
-  useEffect(() => {
-    const fetchQueue = async () => {
-      setLoading(true);
-      try {
-        // In production, this would be a real API call to fetch the queue
-        // Mocking queue data for now
-        const mockQueue: QueueItem[] = Array(5).fill(null).map((_, i) => ({
-          conversationId: `conversation-${i}`,
-          userId: `user-${i}`,
-          userName: `Cliente ${i + 1}`,
-          departmentId: 'dept1',
-          serviceId: 'service1',
-          waitingSince: new Date(Date.now() - (i * 5 * 60000)), // 5 minutes intervals
-          position: i + 1,
-          estimatedWaitTime: (i + 1) * 5, // 5 minutes per position
+  // Calculate waiting time in minutes
+  const getWaitingTime = (startTime: Date): number => {
+    const diffMs = new Date().getTime() - startTime.getTime();
+    return Math.floor(diffMs / 60000); // Convert ms to minutes
+  };
+  
+  const fetchQueue = async () => {
+    setLoading(true);
+    try {
+      // Get conversations that are in waiting status
+      const { data: conversations, error } = await supabase
+        .from('conversations')
+        .select('*')
+        .eq('status', 'waiting')
+        .order('started_at', { ascending: true });
+        
+      if (error) {
+        console.error('Error fetching queue:', error);
+        throw error;
+      }
+      
+      if (conversations) {
+        // Map to queue items
+        const queueItems: QueueItem[] = conversations.map((conv, index) => ({
+          conversationId: conv.id,
+          userId: conv.user_id,
+          userName: conv.user_name,
+          departmentId: conv.department_id,
+          serviceId: conv.service_id,
+          waitingSince: new Date(conv.started_at),
+          position: index + 1,
+          estimatedWaitTime: (index + 1) * 5, // 5 minutes per position estimation
         }));
         
-        setQueue(mockQueue);
-      } catch (error) {
-        console.error('Error fetching queue:', error);
-      } finally {
-        setLoading(false);
+        setQueue(queueItems);
       }
-    };
-    
+    } catch (error) {
+      console.error('Error fetching queue:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  useEffect(() => {
     fetchQueue();
     
     // Subscribe to conversation updates to update queue
     const unsubscribe = subscribeToConversations((updatedConversation) => {
-      // In production, fetch queue again when conversation status changes
       if (updatedConversation.status === 'active' || updatedConversation.status === 'waiting') {
         fetchQueue();
       }
     });
     
+    // Set up interval to refresh queue
+    const interval = setInterval(fetchQueue, 60000); // Refresh every minute
+    
     return () => {
       unsubscribe();
+      clearInterval(interval);
     };
   }, []);
   
-  const handleAcceptNext = () => {
+  const handleAcceptNext = async () => {
     if (queue.length === 0) {
       toast.info('Não há clientes na fila de espera.');
       return;
@@ -78,12 +100,30 @@ const QueueManagement: React.FC<QueueManagementProps> = ({
     }
     
     const nextInQueue = queue[0];
-    onSelectConversation(nextInQueue.conversationId);
     
-    // Remove from queue (in production, this would be handled by the backend)
-    setQueue(prev => prev.slice(1).map((item, i) => ({ ...item, position: i + 1 })));
-    
-    toast.success(`Você aceitou o atendimento de ${nextInQueue.userName}`);
+    try {
+      // Update in database that agent accepts this conversation
+      const { error } = await supabase
+        .from('conversations')
+        .update({ 
+          status: 'active',
+          agent_id: authState.user?.id 
+        })
+        .eq('id', nextInQueue.conversationId);
+        
+      if (error) {
+        console.error('Error accepting conversation:', error);
+        toast.error('Erro ao aceitar conversa.');
+        return;
+      }
+      
+      onSelectConversation(nextInQueue.conversationId);
+      setQueue(prev => prev.slice(1).map((item, i) => ({ ...item, position: i + 1 })));
+      toast.success(`Você aceitou o atendimento de ${nextInQueue.userName}`);
+    } catch (error) {
+      console.error('Error accepting conversation:', error);
+      toast.error('Erro ao aceitar conversa.');
+    }
   };
   
   return (
