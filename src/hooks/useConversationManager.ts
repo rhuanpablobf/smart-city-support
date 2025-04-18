@@ -1,21 +1,29 @@
 
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Conversation } from '@/types/chat';
-import { fetchConversations, createConversation, subscribeToConversations } from '@/services/conversationService';
-import { sendMessage } from '@/services/messageService';
-import { toast } from 'sonner';
+import { fetchConversations } from '@/services/conversationService';
+import { useConversationState } from './chat/useConversationState';
+import { useConversationActions } from './chat/useConversationActions';
 
 export function useConversationManager() {
   const { authState } = useAuth();
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [currentConversation, setCurrentConversation] = useState<Conversation | undefined>();
-  const [loading, setLoading] = useState(true);
+  const {
+    conversations,
+    setConversations,
+    currentConversation,
+    setCurrentConversation,
+    loading,
+    setLoading,
+    activeConversationsCount
+  } = useConversationState();
 
-  // Count active conversations for this agent
-  const activeConversationsCount = conversations.filter(
-    conv => conv.status === 'active' && conv.agentId === authState.user?.id
-  ).length;
+  const {
+    handleSendMessage,
+    handleStartConversation,
+    handleCloseConversation,
+    handleTransferConversation
+  } = useConversationActions();
 
   useEffect(() => {
     const loadConversations = async () => {
@@ -42,96 +50,52 @@ export function useConversationManager() {
     return () => clearInterval(interval);
   }, [authState.isAuthenticated, currentConversation?.id]);
 
-  const handleSendMessage = async (messageContent: string, conversationId?: string) => {
-    if (!conversationId && !currentConversation) return;
-    
-    const targetConvId = conversationId || currentConversation!.id;
-    
-    try {
-      if (!authState.user) throw new Error('User not authenticated');
-      await sendMessage(messageContent, targetConvId, authState.user);
-    } catch (error) {
-      console.error('Error sending message:', error);
-    }
-  };
-
   const handleSelectConversation = (conversation: Conversation) => {
     setCurrentConversation(conversation);
   };
 
-  const handleStartConversation = async () => {
-    try {
-      if (!authState.user) throw new Error('User not authenticated');
-      
-      const newConversation = await createConversation(
-        'Novo atendimento',
-        undefined,
-        undefined,
-        undefined,
-        authState.user,
-        false
-      );
-      
+  const handleStartNewConversation = async () => {
+    const newConversation = await handleStartConversation();
+    if (newConversation) {
       setConversations(prev => [newConversation, ...prev]);
       setCurrentConversation(newConversation);
+      await handleSendMessage('Olá! Como posso ajudar?', newConversation.id);
+    }
+  };
+
+  const updateConversationStatus = async (conversationId: string) => {
+    const result = await handleCloseConversation(conversationId);
+    if (result) {
+      setConversations(prev => 
+        prev.map(conv => 
+          conv.id === conversationId ? { ...conv, status: result.status } : conv
+        )
+      );
       
-      await sendMessage(
-        'Olá! Como posso ajudar?',
-        newConversation.id,
-        authState.user
-      );
-    } catch (error) {
-      console.error('Error starting conversation:', error);
+      if (currentConversation?.id === conversationId) {
+        setCurrentConversation(prev => 
+          prev ? { ...prev, status: result.status } : undefined
+        );
+      }
     }
   };
 
-  const handleCloseConversation = async (conversationId: string) => {
-    setConversations(prev => 
-      prev.map(conv => 
-        conv.id === conversationId ? { ...conv, status: 'closed' } : conv
-      )
-    );
-    
-    if (currentConversation?.id === conversationId) {
-      setCurrentConversation(prev => 
-        prev ? { ...prev, status: 'closed' } : undefined
-      );
-    }
-    
-    toast.success('Conversa encerrada com sucesso');
-  };
-
-  const handleTransferConversation = async (
+  const transferConversation = async (
     conversationId: string,
     targetAgentId: string,
     targetDepartmentId?: string
   ) => {
-    if (targetAgentId) {
+    const result = await handleTransferConversation(conversationId, targetAgentId, targetDepartmentId);
+    if (result) {
       setConversations(prev => 
         prev.map(conv => 
-          conv.id === conversationId ? { ...conv, agentId: targetAgentId } : conv
+          conv.id === conversationId ? { ...conv, ...result } : conv
         )
       );
       
       if (currentConversation?.id === conversationId) {
         setCurrentConversation(undefined);
       }
-      
-      toast.success('Conversa transferida para outro atendente');
-    } else if (targetDepartmentId) {
-      setConversations(prev => 
-        prev.map(conv => 
-          conv.id === conversationId ? 
-          { ...conv, agentId: undefined, status: 'waiting', department: targetDepartmentId } : 
-          conv
-        )
-      );
-      
-      if (currentConversation?.id === conversationId) {
-        setCurrentConversation(undefined);
-      }
-      
-      toast.success('Conversa transferida para outro departamento');
     }
   };
 
@@ -142,8 +106,8 @@ export function useConversationManager() {
     activeConversationsCount,
     handleSendMessage,
     handleSelectConversation,
-    handleStartConversation,
-    handleCloseConversation,
-    handleTransferConversation
+    handleStartConversation: handleStartNewConversation,
+    handleCloseConversation: updateConversationStatus,
+    handleTransferConversation: transferConversation
   };
 }
