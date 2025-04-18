@@ -13,6 +13,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  SidebarProvider
 } from '@/components/ui/sidebar';
 
 const navItems = [
@@ -84,51 +85,53 @@ const DashboardLayout = () => {
   );
   
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <Sidebar>
-        <SidebarHeader className="p-4 border-b">
-          <h1 className="text-xl font-bold">ChatPrefeitura</h1>
-          <div className="mt-4 flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
-              {user?.name?.charAt(0) || 'U'}
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full bg-gray-50">
+        <Sidebar>
+          <SidebarHeader className="p-4 border-b">
+            <h1 className="text-xl font-bold">ChatPrefeitura</h1>
+            <div className="mt-4 flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
+                {user?.name?.charAt(0) || 'U'}
+              </div>
+              <div className="overflow-hidden">
+                <p className="text-sm font-medium truncate">{user?.name || 'Usuário'}</p>
+                <p className="text-xs text-gray-500 truncate">{userRole}</p>
+              </div>
             </div>
-            <div className="overflow-hidden">
-              <p className="text-sm font-medium truncate">{user?.name || 'Usuário'}</p>
-              <p className="text-xs text-gray-500 truncate">{userRole}</p>
-            </div>
-          </div>
-        </SidebarHeader>
-        
-        <SidebarContent>
-          <SidebarMenu>
-            {filteredNavItems.map((item) => (
-              <NavItem
-                key={item.path}
-                to={item.path}
-                icon={item.icon}
-                isActive={location.pathname === item.path}
-              >
-                {item.label}
-              </NavItem>
-            ))}
-          </SidebarMenu>
-        </SidebarContent>
-        
-        <SidebarFooter className="p-4 border-t">
-          <Button
-            variant="outline"
-            className="w-full justify-start gap-2"
-            onClick={logout}
-          >
-            Sair
-          </Button>
-        </SidebarFooter>
-      </Sidebar>
+          </SidebarHeader>
+          
+          <SidebarContent>
+            <SidebarMenu>
+              {filteredNavItems.map((item) => (
+                <NavItem
+                  key={item.path}
+                  to={item.path}
+                  icon={item.icon}
+                  isActive={location.pathname === item.path}
+                >
+                  {item.label}
+                </NavItem>
+              ))}
+            </SidebarMenu>
+          </SidebarContent>
+          
+          <SidebarFooter className="p-4 border-t">
+            <Button
+              variant="outline"
+              className="w-full justify-start gap-2"
+              onClick={logout}
+            >
+              Sair
+            </Button>
+          </SidebarFooter>
+        </Sidebar>
 
-      <div className="flex-1 overflow-auto">
-        <Outlet />
+        <div className="flex-1 overflow-auto">
+          <Outlet />
+        </div>
       </div>
-    </div>
+    </SidebarProvider>
   );
 };
 
