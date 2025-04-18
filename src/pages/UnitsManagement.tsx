@@ -24,8 +24,11 @@ import {
   Department,
   Service,
   QuestionAnswer,
-  fetchSecretariesWithDepartments
-} from '@/services/unitsService';
+  fetchSecretariesWithDepartments,
+  deleteSecretary, 
+  deleteDepartment, 
+  deleteService
+} from '@/services/units';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { toast } from 'sonner';
 import AddSecretaryDialog from '@/components/units/AddSecretaryDialog';
@@ -35,7 +38,6 @@ import EditSecretaryDialog from '@/components/units/EditSecretaryDialog';
 import EditDepartmentDialog from '@/components/units/EditDepartmentDialog';
 import EditServiceDialog from '@/components/units/EditServiceDialog';
 import DeleteConfirmationDialog from '@/components/units/DeleteConfirmationDialog';
-import { deleteSecretary, deleteDepartment, deleteService } from '@/services/unitsService';
 import QuestionAnswersList from '@/components/units/QuestionAnswersList';
 
 const UnitsManagement: React.FC = () => {

@@ -1,9 +1,8 @@
-
 import { useState, useEffect, useMemo } from 'react';
 import { UserRole, User } from '@/types/auth';
 import { supabase } from '@/services/base/supabaseBase';
 import { toast } from 'sonner';
-import { fetchSecretaries, fetchDepartmentsBySecretary } from '@/services/unitsService';
+import { fetchSecretaries, fetchDepartmentsBySecretary } from '@/services/units';
 
 export interface Secretary {
   id: string;
