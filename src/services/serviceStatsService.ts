@@ -18,16 +18,17 @@ export const fetchServiceStats = async (): Promise<ServiceStats[]> => {
     // Transform the data to match our ServiceStats type
     return data.map((stat: any) => ({
       serviceId: stat.service_id || null,
-      serviceName: stat.service_name,
+      serviceName: stat.service_name || 'Unknown Service',
       departmentId: stat.department_id || null,
-      departmentName: stat.department_name,
-      totalConversations: stat.total_conversations,
-      botResolutionRate: stat.bot_resolution_rate,
-      avgHandlingTime: stat.avg_handling_time,
-      satisfactionRate: stat.satisfaction_rate
+      departmentName: stat.department_name || 'Unknown Department',
+      totalConversations: stat.total_conversations || 0,
+      botResolutionRate: stat.bot_resolution_rate || 0,
+      avgHandlingTime: stat.avg_handling_time || 0,
+      satisfactionRate: stat.satisfaction_rate || 0
     }));
   } catch (error) {
     console.error('Error fetching service stats:', error);
-    throw error;
+    return []; // Return an empty array instead of throwing an error
   }
 };
+
