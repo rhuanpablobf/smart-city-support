@@ -49,41 +49,61 @@ const AddDepartmentDialog: React.FC<AddDepartmentDialogProps> = ({
   }, [isOpen, secretaryId]);
 
   const handleAdd = async () => {
-    if (!name.trim() || !secretaryId) {
-      setError("Preencha o nome da unidade");
+    // Validate input
+    if (!name.trim()) {
+      setError("Por favor, insira o nome da unidade");
+      return;
+    }
+    
+    if (!secretaryId) {
+      setError("Selecione uma secretaria primeiro");
       return;
     }
     
     setError(null);
     setIsSubmitting(true);
+    
     try {
-      console.log("Adding department:", name, "to secretary:", secretaryId);
       const result = await addDepartment(name, secretaryId);
+      
       if (result) {
+        // Reset form and close dialog
+        toast.success('Unidade adicionada com sucesso');
         setName('');
         setIsOpen(false);
         onSuccess();
       } else {
-        setError("Erro ao adicionar unidade");
+        // Handle case where department wasn't added
+        setError("Não foi possível adicionar a unidade. Tente novamente.");
       }
     } catch (err) {
-      console.error("Error in handleAdd:", err);
-      setError("Erro ao adicionar unidade");
+      console.error("Error adding department:", err);
+      
+      // Provide more specific error handling
+      const errorMessage = err instanceof Error 
+        ? err.message 
+        : "Erro desconhecido ao adicionar unidade";
+      
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => {
-      if (!isSubmitting) {
-        setIsOpen(open);
-        if (!open) {
-          setName('');
-          setError(null);
+    <Dialog 
+      open={isOpen} 
+      onOpenChange={(open) => {
+        if (!isSubmitting) {
+          setIsOpen(open);
+          if (!open) {
+            setName('');
+            setError(null);
+          }
         }
-      }
-    }}>
+      }}
+    >
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Adicionar Nova Unidade</DialogTitle>
