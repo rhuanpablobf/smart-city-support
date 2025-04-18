@@ -16,6 +16,7 @@ interface ChatWindowProps {
   onBackClick?: () => void;
   loading?: boolean;
   showBackButton?: boolean;
+  chatControls?: React.ReactNode; // New prop for custom chat controls
 }
 
 const ChatWindow: React.FC<ChatWindowProps> = ({
@@ -25,7 +26,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   onSendFile,
   onBackClick,
   loading = false,
-  showBackButton = false
+  showBackButton = false,
+  chatControls // New prop
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -94,6 +96,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
           </>
         )}
       </div>
+      
+      {/* Custom chat controls */}
+      {chatControls}
       
       <ChatInput
         onSendMessage={handleSendMessage}
