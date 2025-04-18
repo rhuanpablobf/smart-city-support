@@ -9,8 +9,11 @@ const Dashboard = () => {
   const conversationManager = useConversationManager();
 
   const handleSendFile = async (file: File, conversationId?: string) => {
-    // In a real app, this would upload the file to storage and then send a message with the file link
     console.log('Send file:', file, 'to conversation:', conversationId || conversationManager.currentConversation?.id);
+  };
+
+  const handleStartNewConversation = async (): Promise<void> => {
+    await conversationManager.handleStartConversation();
   };
 
   const chatOperationsProps = {
@@ -20,7 +23,7 @@ const Dashboard = () => {
     loading: conversationManager.loading,
     activeConversationsCount: conversationManager.activeConversationsCount,
     onSelectConversation: conversationManager.handleSelectConversation,
-    onStartNewConversation: conversationManager.handleStartConversation,
+    onStartNewConversation: handleStartNewConversation,
     onSendMessage: conversationManager.handleSendMessage,
     onSendFile: handleSendFile,
     onCloseConversation: conversationManager.handleCloseConversation,

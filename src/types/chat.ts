@@ -1,7 +1,6 @@
+import { User } from "./auth";
 
-import { User } from './auth';
-
-export type MessageType = 'text' | 'file' | 'system';
+export type MessageType = 'text' | 'file';
 
 export interface Message {
   id: string;
@@ -33,60 +32,16 @@ export interface Conversation {
   isBot: boolean;
 }
 
-export interface Department {
-  id: string;
-  name: string;
-  services: Service[];
-}
-
-export interface Service {
-  id: string;
-  departmentId: string;
-  name: string;
-  description?: string;
-}
-
-export interface BotFlow {
-  id: string;
-  departmentId?: string;
-  serviceId?: string;
-  nodes: BotFlowNode[];
-  edges: BotFlowEdge[];
-}
-
-export interface BotFlowNode {
-  id: string;
-  type: 'question' | 'message' | 'input' | 'options';
-  data: {
-    text?: string;
-    options?: {
-      label: string;
-      value: string;
-      nextNodeId?: string;
-    }[];
-    inputType?: 'text' | 'cpf' | 'email' | 'number';
-    validation?: string;
-  };
-  position: {
-    x: number;
-    y: number;
-  };
-}
-
-export interface BotFlowEdge {
-  id: string;
-  source: string;
-  target: string;
-  type?: string;
-}
-
-export interface QueueItem {
-  conversationId: string;
-  userId: string;
-  userName: string;
-  departmentId?: string;
-  serviceId?: string;
-  waitingSince: Date;
-  position: number;
-  estimatedWaitTime?: number;
+export interface ChatOperationsProps {
+  conversations: Conversation[];
+  currentConversation: Conversation | undefined;
+  currentUser: User | null;
+  loading: boolean;
+  activeConversationsCount: number;
+  onSelectConversation: (conversation: Conversation) => void;
+  onStartNewConversation: () => Promise<void>;
+  onSendMessage: (content: string, conversationId?: string) => Promise<void>;
+  onSendFile: (file: File, conversationId?: string) => Promise<void>;
+  onCloseConversation: (conversationId: string) => Promise<void>;
+  onTransferConversation: (conversationId: string, targetAgentId: string, targetDepartmentId?: string) => Promise<void>;
 }

@@ -3,7 +3,6 @@ import React, { useEffect, useState } from 'react';
 import ChatOperations from './ChatOperations';
 import { useConversationManager } from '@/hooks/useConversationManager';
 import { useAuth } from '@/contexts/AuthContext';
-import { Conversation } from '@/types/chat';
 import { supabase } from '@/services/base/supabaseBase';
 
 const ChatInterface: React.FC = () => {
@@ -53,6 +52,10 @@ const ChatInterface: React.FC = () => {
     console.log('Send file:', file, 'to conversation:', conversationId || conversationManager.currentConversation?.id);
   };
 
+  const handleStartNewConversation = async (): Promise<void> => {
+    await conversationManager.handleStartConversation();
+  };
+
   const chatOperationsProps = {
     conversations: conversationManager.conversations,
     currentConversation: conversationManager.currentConversation,
@@ -60,7 +63,7 @@ const ChatInterface: React.FC = () => {
     loading: conversationManager.loading,
     activeConversationsCount: conversationManager.activeConversationsCount,
     onSelectConversation: conversationManager.handleSelectConversation,
-    onStartNewConversation: conversationManager.handleStartConversation,
+    onStartNewConversation: handleStartNewConversation,
     onSendMessage: conversationManager.handleSendMessage,
     onSendFile: handleSendFile,
     onCloseConversation: conversationManager.handleCloseConversation,
