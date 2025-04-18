@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -11,8 +10,33 @@ import { createConversation, fetchConversations } from '@/services/conversationS
 import { sendMessage, subscribeToMessages } from '@/services/messageService';
 import { fetchSecretariesWithDepartments } from '@/services/units/hierarchyService';
 import { v4 as uuidv4 } from 'uuid';
+import { User } from '@/types/auth';
 
 const CPF_REGEX = /^\d{11}$/;
+
+// Define a system user for system messages
+const SYSTEM_USER: User = {
+  id: 'system',
+  email: 'system@chatprefeitura.com',
+  name: 'Sistema',
+  role: 'system' as any, // Using 'any' to override the type temporarily
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  active: true,
+  maxConcurrentChats: 0
+};
+
+// Define a guest user for when the user is not logged in
+const createGuestUser = (name: string): User => ({
+  id: 'guest',
+  email: `guest@chatprefeitura.com`,
+  name: name,
+  role: 'user' as any,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  active: true,
+  maxConcurrentChats: 0
+});
 
 const ChatInterface: React.FC = () => {
   const { authState } = useAuth();
@@ -89,7 +113,7 @@ const ChatInterface: React.FC = () => {
       await sendMessage(
         `Bem-vindo ao atendimento! Você selecionou o serviço: ${serviceName}. Como posso ajudar?`,
         conversation.id,
-        { id: 'system', name: 'Sistema', role: 'system' },
+        SYSTEM_USER,
         'system'
       );
       
@@ -109,7 +133,7 @@ const ChatInterface: React.FC = () => {
             await sendMessage(
               `Aqui estão as perguntas frequentes sobre este serviço:\n\n${qaMessage}`,
               conversation.id,
-              { id: 'system', name: 'Sistema', role: 'system' },
+              SYSTEM_USER,
               'system'
             );
           }
@@ -129,10 +153,13 @@ const ChatInterface: React.FC = () => {
     if (!currentConversation) return;
     
     try {
+      // Use the authenticated user or create a guest user
+      const user = authState.user || createGuestUser(userName);
+      
       await sendMessage(
         messageContent, 
         currentConversation.id, 
-        authState.user || { id: 'user', name: userName, role: 'user' }
+        user
       );
       
       // If message is requesting human attendant, check if available and update queue
@@ -146,14 +173,14 @@ const ChatInterface: React.FC = () => {
           await sendMessage(
             `Você está na posição ${position} da fila. Em breve um atendente estará disponível.`,
             currentConversation.id,
-            { id: 'system', name: 'Sistema', role: 'system' },
+            SYSTEM_USER,
             'system'
           );
         } else {
           await sendMessage(
             "Nenhum atendente está online neste momento. Você pode continuar com as perguntas ou voltar mais tarde.",
             currentConversation.id,
-            { id: 'system', name: 'Sistema', role: 'system' },
+            SYSTEM_USER,
             'system'
           );
         }
@@ -201,7 +228,7 @@ const ChatInterface: React.FC = () => {
       await sendMessage(
         "Voltando para o sistema de perguntas e respostas. Como posso ajudar?",
         currentConversation.id,
-        { id: 'system', name: 'Sistema', role: 'system' },
+        SYSTEM_USER,
         'system'
       );
       
@@ -303,7 +330,7 @@ const ChatInterface: React.FC = () => {
             <div className="flex-1">
               <ChatWindow
                 conversation={currentConversation}
-                currentUser={authState.user || { id: 'user', name: userName, role: 'user' }}
+                currentUser={authState.user || createGuestUser(userName)}
                 onSendMessage={handleSendMessage}
                 onSendFile={handleSendFile}
                 loading={loading}

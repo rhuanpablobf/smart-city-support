@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import ChatWindow from '@/components/chat/ChatWindow';
 import ConversationList from '@/components/chat/ConversationList';
 import { Conversation } from '@/types/chat';
-import { fetchConversations, createConversation } from '@/services/conversationService';
+import { fetchConversations, createConversation, subscribeToConversations } from '@/services/conversationService';
 import { sendMessage, subscribeToMessages } from '@/services/messageService';
 import ChatInterface from '@/components/chat/ChatInterface';
 import QueueManagement from '@/components/chat/QueueManagement';
