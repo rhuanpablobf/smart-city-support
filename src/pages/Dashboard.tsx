@@ -1,250 +1,38 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import ChatWindow from '@/components/chat/ChatWindow';
-import ConversationList from '@/components/chat/ConversationList';
-import { Conversation } from '@/types/chat';
-import { fetchConversations, createConversation } from '@/services/conversationService';
-import { sendMessage } from '@/services/messageService';
-import ChatInterface from '@/components/chat/ChatInterface';
-import QueueManagement from '@/components/chat/QueueManagement';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import ConversationAudit from '@/components/audit/ConversationAudit';
-import { UserRole } from '@/types/auth';
-import { toast } from 'sonner';
+import DashboardContent from '@/components/chat/DashboardContent';
+import { useConversationManager } from '@/hooks/useConversationManager';
 
 const Dashboard = () => {
   const { authState } = useAuth();
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [currentConversation, setCurrentConversation] = useState<Conversation | undefined>();
-  const [loading, setLoading] = useState(true);
-
-  // Role-based UI control
-  const isAdmin = authState.user?.role === 'admin' || authState.user?.role === 'secretary_admin';
-  const isAgent = authState.user?.role === 'agent' || authState.user?.role === 'manager';
-  const isUser = authState.user?.role === 'user' || !authState.user;
-  
-  // Count active conversations for this agent
-  const activeConversationsCount = conversations.filter(
-    conv => conv.status === 'active' && conv.agentId === authState.user?.id
-  ).length;
-
-  useEffect(() => {
-    const loadConversations = async () => {
-      if (!authState.isAuthenticated) return;
-      
-      try {
-        setLoading(true);
-        const data = await fetchConversations();
-        setConversations(data);
-
-        // If we were viewing a conversation, update it
-        if (currentConversation) {
-          const updated = data.find(c => c.id === currentConversation.id);
-          if (updated) setCurrentConversation(updated);
-        }
-      } catch (error) {
-        console.error('Error loading conversations:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadConversations();
-
-    // Set up periodic refresh for conversations
-    const interval = setInterval(() => {
-      loadConversations();
-    }, 10000); // Refresh every 10 seconds
-
-    return () => {
-      clearInterval(interval);
-    };
-  }, [authState.isAuthenticated, currentConversation?.id]);
-
-  const handleSendMessage = async (messageContent: string, conversationId?: string) => {
-    if (!conversationId && !currentConversation) {
-      // No conversation selected, show error or create a new one
-      return;
-    }
-    
-    const targetConvId = conversationId || currentConversation!.id;
-    
-    try {
-      if (!authState.user) {
-        throw new Error('User not authenticated');
-      }
-      
-      await sendMessage(messageContent, targetConvId, authState.user);
-    } catch (error) {
-      console.error('Error sending message:', error);
-    }
-  };
+  const conversationManager = useConversationManager();
 
   const handleSendFile = async (file: File, conversationId?: string) => {
     // In a real app, this would upload the file to storage and then send a message with the file link
-    console.log('Send file:', file, 'to conversation:', conversationId || currentConversation?.id);
+    console.log('Send file:', file, 'to conversation:', conversationId || conversationManager.currentConversation?.id);
   };
 
-  const handleSelectConversation = (conversation: Conversation) => {
-    setCurrentConversation(conversation);
-  };
-
-  const handleStartConversation = async () => {
-    try {
-      if (!authState.user) {
-        throw new Error('User not authenticated');
-      }
-      
-      const newConversation = await createConversation(
-        'Novo atendimento', 
-        undefined, 
-        undefined, 
-        undefined, 
-        authState.user,
-        false
-      );
-      
-      setConversations(prev => [newConversation, ...prev]);
-      setCurrentConversation(newConversation);
-      
-      // Send welcome message
-      await sendMessage(
-        'Olá! Como posso ajudar?', 
-        newConversation.id, 
-        authState.user
-      );
-    } catch (error) {
-      console.error('Error starting conversation:', error);
-    }
-  };
-  
-  const handleCloseConversation = async (conversationId: string) => {
-    // In a real app, this would call the API to close the conversation
-    setConversations(prev => 
-      prev.map(conv => 
-        conv.id === conversationId ? { ...conv, status: 'closed' } : conv
-      )
-    );
-    
-    if (currentConversation?.id === conversationId) {
-      setCurrentConversation(prev => 
-        prev ? { ...prev, status: 'closed' } : undefined
-      );
-    }
-    
-    toast.success('Conversa encerrada com sucesso');
-  };
-  
-  const handleTransferConversation = async (
-    conversationId: string, 
-    targetAgentId: string, 
-    targetDepartmentId?: string
-  ) => {
-    // In a real app, this would call the API to transfer the conversation
-    if (targetAgentId) {
-      // Transfer to agent
-      setConversations(prev => 
-        prev.map(conv => 
-          conv.id === conversationId ? { ...conv, agentId: targetAgentId } : conv
-        )
-      );
-      
-      if (currentConversation?.id === conversationId) {
-        setCurrentConversation(undefined);
-      }
-      
-      toast.success('Conversa transferida para outro atendente');
-    } else if (targetDepartmentId) {
-      // Transfer to department (waiting queue)
-      setConversations(prev => 
-        prev.map(conv => 
-          conv.id === conversationId ? 
-          { ...conv, agentId: undefined, status: 'waiting', department: targetDepartmentId } : 
-          conv
-        )
-      );
-      
-      if (currentConversation?.id === conversationId) {
-        setCurrentConversation(undefined);
-      }
-      
-      toast.success('Conversa transferida para outro departamento');
-    }
-  };
-
-  const renderDashboardContent = () => {
-    if (isUser) {
-      // Customer interface
-      return <ChatInterface />;
-    }
-    
-    if (isAgent || isAdmin) {
-      // Agent or admin interface with tabs
-      return (
-        <Tabs defaultValue="conversations" className="h-full flex flex-col">
-          <div className="border-b px-4">
-            <TabsList>
-              <TabsTrigger value="conversations">Conversas</TabsTrigger>
-              {isAdmin && <TabsTrigger value="audit">Auditoria</TabsTrigger>}
-            </TabsList>
-          </div>
-          
-          <TabsContent value="conversations" className="flex-1 flex overflow-hidden p-0">
-            <div className="w-1/4 border-r">
-              <ConversationList
-                conversations={conversations}
-                onSelectConversation={handleSelectConversation}
-                onStartNewConversation={isAdmin ? handleStartConversation : undefined}
-                selectedConversationId={currentConversation?.id}
-                isLoading={loading}
-              />
-              {isAgent && (
-                <div className="p-2 overflow-y-auto">
-                  <QueueManagement 
-                    onSelectConversation={(convId) => {
-                      const conversation = conversations.find(c => c.id === convId);
-                      if (conversation) handleSelectConversation(conversation);
-                    }}
-                    activeConversations={activeConversationsCount}
-                  />
-                </div>
-              )}
-            </div>
-            
-            <div className="flex-1 h-full">
-              <ChatWindow
-                conversation={currentConversation}
-                currentUser={authState.user}
-                onSendMessage={handleSendMessage}
-                onSendFile={handleSendFile}
-                onCloseConversation={handleCloseConversation}
-                onTransferConversation={handleTransferConversation}
-                showBackButton={true}
-                onBackClick={() => setCurrentConversation(undefined)}
-              />
-            </div>
-          </TabsContent>
-          
-          {isAdmin && (
-            <TabsContent value="audit" className="flex-1 overflow-auto p-0">
-              <ConversationAudit />
-            </TabsContent>
-          )}
-        </Tabs>
-      );
-    }
-    
-    return (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-lg text-gray-500">Acesso não autorizado</p>
-      </div>
-    );
+  const chatOperationsProps = {
+    conversations: conversationManager.conversations,
+    currentConversation: conversationManager.currentConversation,
+    currentUser: authState.user,
+    loading: conversationManager.loading,
+    activeConversationsCount: conversationManager.activeConversationsCount,
+    onSelectConversation: conversationManager.handleSelectConversation,
+    onStartNewConversation: conversationManager.handleStartConversation,
+    onSendMessage: conversationManager.handleSendMessage,
+    onSendFile: handleSendFile,
+    onCloseConversation: conversationManager.handleCloseConversation,
+    onTransferConversation: conversationManager.handleTransferConversation
   };
 
   return (
     <div className="container mx-auto h-full">
-      {renderDashboardContent()}
+      <DashboardContent 
+        chatOperationsProps={chatOperationsProps}
+        currentUser={authState.user}
+      />
     </div>
   );
 };
