@@ -32,8 +32,8 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-100">
-      <div className="w-80 bg-white shadow-md">
+    <div className="flex h-full">
+      <div className="w-80 bg-white shadow-md border-r">
         <ConversationList
           conversations={conversations}
           selectedConversationId={activeConversation?.id}
